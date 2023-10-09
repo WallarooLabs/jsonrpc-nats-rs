@@ -581,15 +581,6 @@ dependencies = [
 name = "jsonrpc-nats"
 version = "0.1.0"
 dependencies = [
- "async-nats",
- "jsonrpc",
- "serde_json",
-]
-
-[[package]]
-name = "jsonrpc-nats-server"
-version = "0.1.0"
-dependencies = [
  "anyhow",
  "async-nats",
  "bytes",
@@ -782,7 +773,6 @@ dependencies = [
  "clap",
  "jsonrpc",
  "jsonrpc-nats",
- "jsonrpc-nats-server",
  "serde",
  "tokio",
 ]

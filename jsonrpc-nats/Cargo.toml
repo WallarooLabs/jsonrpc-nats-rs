@@ -5,9 +5,15 @@ edition = "2021"
 
 
 [dependencies]
+anyhow.workspace = true
 async-nats.workspace = true
-jsonrpc.workspace = true
+bytes.workspace = true
+futures.workspace = true
+serde.workspace = true
 serde_json.workspace = true
+tracing.workspace = true
+
+jsonrpc.workspace = true
 
 
 [lints]
