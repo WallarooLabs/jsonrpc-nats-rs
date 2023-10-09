@@ -1,5 +1,6 @@
 use async_nats as nats;
 use jsonrpc::async_trait;
+use jsonrpc::AsyncClient;
 use jsonrpc::TransportError;
 use serde_json as json;
 
@@ -13,6 +14,12 @@ pub struct Nats {
 impl Nats {
     pub async fn new(addr: impl nats::ToServerAddrs) -> Result<Self, nats::ConnectError> {
         nats::connect(addr).await.map(|client| Self { client })
+    }
+
+    pub async fn client(
+        addr: impl nats::ToServerAddrs,
+    ) -> Result<AsyncClient<Self>, nats::ConnectError> {
+        Self::new(addr).await.map(AsyncClient::with_transport)
     }
 }
 
