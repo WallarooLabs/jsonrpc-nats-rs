@@ -1,11 +1,5 @@
 [workspace]
-members = [
-    "jsonrpc",
-    "jsonrpc-nats",
-    "jsonrpc-nats-server",
-    "jsonrpc-nats-client",
-    "pingpong",
-]
+members = ["jsonrpc", "jsonrpc-nats", "jsonrpc-nats-server", "pingpong"]
 resolver = "2"
 
 
@@ -24,7 +18,6 @@ tracing = "0.1"
 
 jsonrpc = { path = "./jsonrpc" }
 jsonrpc-nats = { path = "./jsonrpc-nats" }
-jsonrpc-nats-client = { path = "./jsonrpc-nats-client" }
 jsonrpc-nats-server = { path = "./jsonrpc-nats-server" }
 
 
