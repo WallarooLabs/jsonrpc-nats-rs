@@ -1,0 +1,56 @@
+use std::borrow::Cow;
+use std::error::Error as StdError;
+use std::fmt;
+use std::sync::atomic::{AtomicU64, Ordering};
+
+use serde::{de, Deserialize, Serialize};
+use serde_json as json;
+use tap::TapFallible;
+use thiserror::Error;
+
+pub use async_trait::async_trait;
+
+pub use self::error::Error;
+pub use self::error::ErrorObject;
+pub use self::error::TransportError;
+pub use self::request::Request;
+pub use self::response::Response;
+pub use self::transport::ClientTransport;
+pub use self::transport::ServerTransport;
+
+pub mod client;
+pub mod server;
+
+mod error;
+mod request;
+mod response;
+mod transport;
+
+pub trait JsonRpc2 {
+    const METHOD: &'static str;
+    type Request: fmt::Debug + Serialize + de::DeserializeOwned;
+    type Response: fmt::Debug + Serialize + de::DeserializeOwned;
+    type Error: fmt::Debug + Serialize + de::DeserializeOwned;
+}
+
+pub trait JsonRpc2Client: JsonRpc2 {
+    fn jsonrpc2_params(request: Option<Self::Request>) -> Result<Option<json::Value>, json::Error> {
+        request.map(json::to_value).transpose()
+    }
+}
+
+#[async_trait]
+pub trait JsonRpc2Service: JsonRpc2 {
+    type Context;
+
+    async fn serve(
+        ctx: &Self::Context,
+        request: Option<Self::Request>,
+    ) -> Result<Option<Self::Response>, Self::Error>;
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub enum JsonRpc2Signature {
+    #[serde(rename = "2.0")]
+    JsonRpc2,
+}
