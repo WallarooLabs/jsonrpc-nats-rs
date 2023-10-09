@@ -9,7 +9,6 @@ anyhow.workspace = true
 tokio.workspace = true
 jsonrpc.workspace = true
 jsonrpc-nats.workspace = true
-jsonrpc-nats-server.workspace = true
 serde.workspace = true
 
 clap = { version = "4.4", features = ["derive", "deprecated"] }
