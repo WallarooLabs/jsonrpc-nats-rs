@@ -17,16 +17,13 @@ pub use self::error::TransportError;
 pub use self::request::Request;
 pub use self::response::Response;
 pub use self::service::JsonRpc2Service;
-pub use self::transport::ServerTransport;
 
-pub mod client;
-pub mod server;
+mod client;
 mod service;
 
 mod error;
 mod request;
 mod response;
-mod transport;
 
 pub trait JsonRpc2 {
     const METHOD: &'static str;
