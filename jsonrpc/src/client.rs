@@ -38,46 +38,7 @@ where
         response
             .into_typed_result::<R>()
             .expect("Failed to convert from JSOM RESPONSE")
-    }
-}
-
-impl<T> AsyncClient<T>
-where
-    T: ClientTransport + fmt::Debug + 'static,
-{
-    pub fn with_transport_deprecated(transport: T) -> Self {
-        let id = AtomicU64::new(0);
-        Self { transport, id }
-    }
-
-    /// Makes JSON RPC call with given request and returns the recevied response
-    /// # Errors
-    /// Error could either transport, JSON serialization, or the error returned
-    /// by the RPC call itself.
-    #[tracing::instrument]
-    pub async fn call_deprecated<R>(
-        &mut self,
-        request: Option<<R as JsonRpc2>::Request>,
-    ) -> Result<<R as JsonRpc2>::Response, Error<<T as ClientTransport>::TransportError>>
-    where
-        R: JsonRpc2Client,
-    {
-        let id = self.id().into();
-
-        let request = Request::from_request::<R>(id, request)
-            .tap_err(|e| tracing::error!(%e, "Request::from_input"))?;
-
-        let handle = self.transport.send_request(&request).await?;
-        let result = self
-            .transport
-            .recv_response(handle)
-            .await?
-            .into_result()
-            .tap_ok(|v| tracing::trace!(%v, "recv_response"))?;
-
-        let response = json::from_value(result)
-            .tap_err(|e| tracing::trace!(%e, "Failed to parse response"))?;
-
-        Ok(response)
+            .tap_ok(|response| tracing::trace!(?response))
+            .tap_err(|error| tracing::trace!(?error))
     }
 }

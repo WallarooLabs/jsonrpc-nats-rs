@@ -13,8 +13,6 @@ impl jsonrpc::JsonRpc2 for PingPong {
     type Error = String;
 }
 
-impl jsonrpc::JsonRpc2Client for PingPong {}
-
 #[jsonrpc::async_trait]
 impl jsonrpc::JsonRpc2Service for PingPong {
     type Context = ();
