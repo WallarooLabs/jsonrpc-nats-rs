@@ -1,3 +1,5 @@
+// use std::error::Error as StdError;
+
 use async_nats as nats;
 use jsonrpc::async_trait;
 use jsonrpc::AsyncClient;
