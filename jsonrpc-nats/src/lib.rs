@@ -1,6 +1,7 @@
 // use std::error::Error as StdError;
 
 use async_nats as nats;
+use bytes::Bytes;
 use jsonrpc::async_trait;
 use jsonrpc::AsyncClient;
 use jsonrpc::JsonRpc2;
@@ -10,6 +11,7 @@ use serde_json as json;
 
 pub use self::server::Server;
 
+pub mod client;
 mod server;
 
 #[derive(Debug)]
@@ -25,7 +27,9 @@ impl Nats {
     pub async fn client(
         addr: impl nats::ToServerAddrs,
     ) -> Result<AsyncClient<Self>, nats::ConnectError> {
-        Self::new(addr).await.map(AsyncClient::with_transport)
+        Self::new(addr)
+            .await
+            .map(AsyncClient::with_transport_deprecated)
     }
 
     pub async fn server(addr: impl nats::ToServerAddrs) -> Result<Server, nats::Error> {
