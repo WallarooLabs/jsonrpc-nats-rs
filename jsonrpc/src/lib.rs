@@ -16,12 +16,12 @@ pub use self::error::ErrorObject;
 pub use self::error::TransportError;
 pub use self::request::Request;
 pub use self::response::Response;
-// pub use self::service::JsonRpc2Service;
+pub use self::service::JsonRpc2Service;
 pub use self::transport::ServerTransport;
 
 pub mod client;
 pub mod server;
-pub mod service;
+mod service;
 
 mod error;
 mod request;
@@ -33,16 +33,6 @@ pub trait JsonRpc2 {
     type Request: fmt::Debug + Serialize + de::DeserializeOwned;
     type Response: fmt::Debug + Serialize + de::DeserializeOwned;
     type Error: fmt::Debug + Serialize + de::DeserializeOwned;
-}
-
-#[async_trait]
-pub trait JsonRpc2Service: JsonRpc2 {
-    type Context;
-
-    async fn serve(
-        ctx: &Self::Context,
-        request: Option<Self::Request>,
-    ) -> Result<Option<Self::Response>, Self::Error>;
 }
 
 #[derive(Debug, Serialize, Deserialize)]

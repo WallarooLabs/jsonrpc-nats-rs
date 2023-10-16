@@ -1,9 +1,11 @@
+use jsonrpc::JsonRpc2;
+use jsonrpc::JsonRpc2Service;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug)]
 pub(crate) struct PingPong;
 
-impl jsonrpc::JsonRpc2 for PingPong {
+impl JsonRpc2 for PingPong {
     const METHOD: &'static str = "pingpong";
     type Request = PingPongRequest;
     type Response = PingPongResponse;
@@ -11,38 +13,18 @@ impl jsonrpc::JsonRpc2 for PingPong {
 }
 
 #[jsonrpc::async_trait(?Send)]
-impl jsonrpc::service::JsonRpc2Service<<Self as jsonrpc::JsonRpc2>::Request> for PingPong {
-    type Response = <Self as jsonrpc::JsonRpc2>::Response;
-    type Error = <Self as jsonrpc::JsonRpc2>::Error;
+impl JsonRpc2Service<<Self as JsonRpc2>::Request> for PingPong {
+    type Response = <Self as JsonRpc2>::Response;
+    type Error = <Self as JsonRpc2>::Error;
 
     async fn call(
         &self,
-        request: <Self as jsonrpc::JsonRpc2>::Request,
+        request: <Self as JsonRpc2>::Request,
     ) -> Result<Self::Response, Self::Error> {
         if request.text.len() < 6 {
             Ok(request.into())
         } else {
             Err(format!("cannot process: {}", request.text))
-        }
-    }
-}
-
-#[jsonrpc::async_trait]
-impl jsonrpc::JsonRpc2Service for PingPong {
-    type Context = ();
-
-    async fn serve(
-        _ctx: &Self::Context,
-        request: Option<Self::Request>,
-    ) -> Result<Option<Self::Response>, Self::Error> {
-        if let Some(request) = request {
-            if request.text.len() < 6 {
-                Ok(Some(request.into()))
-            } else {
-                Err(format!("cannot process: {}", request.text))
-            }
-        } else {
-            Err(String::from("Request is mandatory"))
         }
     }
 }
