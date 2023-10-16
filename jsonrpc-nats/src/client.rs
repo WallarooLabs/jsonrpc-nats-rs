@@ -2,12 +2,14 @@ use super::*;
 
 #[derive(Debug)]
 pub struct Client {
-    client: nats::Client,
+    inner: nats::Client,
 }
 
 impl Client {
     pub async fn new(addr: impl nats::ToServerAddrs) -> Result<Self, nats::ConnectError> {
-        nats::connect(addr).await.map(|client| Self { client })
+        nats::connect(addr)
+            .await
+            .map(|client| Self { inner: client })
     }
 
     pub async fn client(
@@ -21,7 +23,7 @@ impl Client {
         subject: String,
         payload: Bytes,
     ) -> Result<Bytes, nats::RequestError> {
-        self.client
+        self.inner
             .request(subject, payload)
             .await
             .map(|message| message.payload)
