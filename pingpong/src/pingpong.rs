@@ -27,7 +27,15 @@ impl jsonrpc::JsonRpc2Service for PingPong {
         _ctx: &Self::Context,
         request: Option<Self::Request>,
     ) -> Result<Option<Self::Response>, Self::Error> {
-        Ok(request.map(Into::into))
+        if let Some(request) = request {
+            if request.text.len() < 6 {
+                Ok(Some(request.into()))
+            } else {
+                Err(format!("cannot process: {}", request.text))
+            }
+        } else {
+            Err(String::from("Request is mandatory"))
+        }
     }
 }
 

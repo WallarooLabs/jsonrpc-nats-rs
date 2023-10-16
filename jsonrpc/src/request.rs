@@ -23,14 +23,29 @@ impl Request {
         }
     }
 
-    pub fn from_input<T>(id: u64, request: Option<T::Request>) -> Result<Self, json::Error>
+    pub fn from_request<R>(
+        id: json::Value,
+        request: Option<R::Request>,
+    ) -> Result<Self, json::Error>
     where
-        T: JsonRpc2Client,
+        R: JsonRpc2,
     {
-        let method = T::METHOD;
-        let params = T::jsonrpc2_params(request)?;
-        let request = Self::new(method, params, id);
+        let jsonrpc = JsonRpc2Version::JsonRpc2;
+        let method = R::METHOD.into();
+        let params = request.map(json::to_value).transpose()?;
 
-        Ok(request)
+        Ok(Self {
+            jsonrpc,
+            method,
+            params,
+            id,
+        })
+    }
+
+    pub fn into_request<R>(self) -> json::Result<Option<R::Request>>
+    where
+        R: JsonRpc2,
+    {
+        self.params.map(json::from_value).transpose()
     }
 }

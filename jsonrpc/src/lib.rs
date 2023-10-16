@@ -16,11 +16,13 @@ pub use self::error::ErrorObject;
 pub use self::error::TransportError;
 pub use self::request::Request;
 pub use self::response::Response;
+// pub use self::service::JsonRpc2Service;
 pub use self::transport::ClientTransport;
 pub use self::transport::ServerTransport;
 
 pub mod client;
 pub mod server;
+pub mod service;
 
 mod error;
 mod request;

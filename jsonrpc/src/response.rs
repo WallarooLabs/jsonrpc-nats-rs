@@ -56,6 +56,16 @@ impl Response {
         }
     }
 
+    pub fn into_typed_result<R>(self) -> json::Result<Result<R::Response, R::Error>>
+    where
+        R: JsonRpc2,
+    {
+        match self {
+            Self::Success { result, .. } => json::from_value(result).map(Ok),
+            Self::Failure { error, .. } => error.extract_error().map(Err),
+        }
+    }
+
     pub fn from_result<T, E>(id: json::Value, result: Result<T, E>) -> json::Result<Self>
     where
         T: Serialize,
