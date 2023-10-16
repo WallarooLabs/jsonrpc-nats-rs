@@ -15,6 +15,7 @@ pub use self::error::Error;
 pub use self::error::ErrorObject;
 pub use self::error::TransportError;
 pub use self::request::Request;
+pub use self::response::Payload;
 pub use self::response::Response;
 pub use self::service::JsonRpc2Service;
 

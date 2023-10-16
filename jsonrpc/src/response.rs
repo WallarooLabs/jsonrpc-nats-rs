@@ -1,40 +1,42 @@
 use super::*;
 
 #[derive(Debug, Serialize, Deserialize)]
+pub struct Response {
+    jsonrpc: JsonRpc2Version,
+    id: json::Value,
+    #[serde(flatten)]
+    payload: Payload,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
 #[serde(untagged)]
-pub enum Response {
-    Success {
-        jsonrpc: JsonRpc2Version,
-        result: json::Value,
-        id: json::Value,
-    },
-    Failure {
-        jsonrpc: JsonRpc2Version,
-        error: ErrorObject,
-        id: json::Value,
-    },
+pub enum Payload {
+    Success { result: json::Value },
+    Failure { error: ErrorObject },
 }
 
 impl Response {
     pub fn id(&self) -> &json::Value {
-        match self {
-            Self::Success { id, .. } | Self::Failure { id, .. } => id,
-        }
+        &self.id
     }
 
     pub fn success(result: json::Value, id: json::Value) -> Self {
-        Self::Success {
-            jsonrpc: JsonRpc2Version::JsonRpc2,
-            result,
+        let jsonrpc = JsonRpc2Version::JsonRpc2;
+        let payload = Payload::success(result);
+        Self {
+            jsonrpc,
             id,
+            payload,
         }
     }
 
     pub fn failure(error: ErrorObject, id: json::Value) -> Self {
-        Self::Failure {
-            jsonrpc: JsonRpc2Version::JsonRpc2,
-            error,
+        let jsonrpc = JsonRpc2Version::JsonRpc2;
+        let payload = Payload::failure(error);
+        Self {
+            jsonrpc,
             id,
+            payload,
         }
     }
 
@@ -50,20 +52,14 @@ impl Response {
     }
 
     pub fn into_result(self) -> Result<json::Value, ErrorObject> {
-        match self {
-            Self::Success { result, .. } => Ok(result),
-            Self::Failure { error, .. } => Err(error),
-        }
+        self.payload.into_result()
     }
 
     pub fn into_typed_result<R>(self) -> json::Result<Result<R::Response, R::Error>>
     where
         R: JsonRpc2,
     {
-        match self {
-            Self::Success { result, .. } => json::from_value(result).map(Ok),
-            Self::Failure { error, .. } => error.extract_error().map(Err),
-        }
+        self.payload.into_typed_result::<R>()
     }
 
     pub fn from_result<T, E>(id: json::Value, result: Result<T, E>) -> json::Result<Self>
@@ -91,5 +87,32 @@ impl Response {
         json::to_value(failure)
             .map(ErrorObject::with_data)
             .map(|error| Self::failure(error, id))
+    }
+}
+
+impl Payload {
+    pub fn success(result: json::Value) -> Self {
+        Self::Success { result }
+    }
+
+    pub fn failure(error: ErrorObject) -> Self {
+        Self::Failure { error }
+    }
+
+    pub fn into_result(self) -> Result<json::Value, ErrorObject> {
+        match self {
+            Self::Success { result } => Ok(result),
+            Self::Failure { error } => Err(error),
+        }
+    }
+
+    pub fn into_typed_result<R>(self) -> json::Result<Result<R::Response, R::Error>>
+    where
+        R: JsonRpc2,
+    {
+        match self {
+            Self::Success { result } => json::from_value(result).map(Ok),
+            Self::Failure { error } => error.extract_error().map(Err),
+        }
     }
 }
