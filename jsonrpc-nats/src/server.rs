@@ -95,39 +95,3 @@ fn nats_service_error(error: json::Error) -> nats::service::error::Error {
         code: usize::MAX,
     }
 }
-
-// #[derive(Debug)]
-// struct Inner<S> {
-//     service: S,
-// }
-
-// impl<R, S> tower::Service<nats::service::Request> for Inner
-// where
-//     S: tower::Service<R>,
-// {
-//     type Response = bytes::Bytes;
-
-//     type Error = json::Error;
-
-//     type Future = Box;
-
-//     fn poll_ready(
-//         &mut self,
-//         _cx: &mut std::task::Context<'_>,
-//     ) -> std::task::Poll<Result<(), Self::Error>> {
-//         std::task::Poll::Ready(Ok(()))
-//     }
-
-//     fn call(&mut self, request: nats::service::Request) -> Self::Future {
-//     let jsonrpc::Request { params, id, .. } = json::from_slice(&request.message.payload)?;
-//     let request = params
-//         .map(json::from_value::<<R as JsonRpc2>::Request>)
-//         .transpose()?;
-//     tracing::debug!(?request);
-//     let result = self.service.call(request).and_then(|)
-//     let response = jsonrpc::Response::from_result(id, result)?;
-//     let bytes = json::to_vec(&response)?;
-//     Ok(bytes.into())
-//         request
-//     }
-// }

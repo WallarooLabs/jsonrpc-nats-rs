@@ -1,7 +1,3 @@
-use std::task;
-
-use futures::future;
-use futures::future::BoxFuture;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug)]
@@ -63,22 +59,5 @@ impl From<PingPongRequest> for PingPongResponse {
         let text = ping.text.repeat(ping.count);
         let count = ping.text.len();
         Self { text, count }
-    }
-}
-
-impl tower::Service<PingPongRequest> for PingPong {
-    type Response = PingPongResponse;
-
-    type Error = ();
-
-    type Future = BoxFuture<'static, Result<Self::Response, Self::Error>>;
-
-    fn poll_ready(&mut self, _cx: &mut task::Context<'_>) -> task::Poll<Result<(), Self::Error>> {
-        task::Poll::Ready(Ok(()))
-    }
-
-    fn call(&mut self, request: PingPongRequest) -> Self::Future {
-        let response = future::ok(PingPongResponse::from(request));
-        Box::pin(response)
     }
 }
