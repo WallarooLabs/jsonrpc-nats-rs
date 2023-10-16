@@ -5,6 +5,18 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug)]
 pub(crate) struct PingPong;
 
+#[derive(Debug, Serialize, Deserialize)]
+pub(crate) struct PingPongRequest {
+    count: usize,
+    text: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub(crate) struct PingPongResponse {
+    text: String,
+    count: usize,
+}
+
 impl JsonRpc2 for PingPong {
     const METHOD: &'static str = "pingpong";
     type Request = PingPongRequest;
@@ -29,23 +41,11 @@ impl JsonRpc2Service<<Self as JsonRpc2>::Request> for PingPong {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-pub(crate) struct PingPongRequest {
-    count: usize,
-    text: String,
-}
-
 impl PingPongRequest {
     pub(crate) fn new(count: usize, text: impl ToString) -> Self {
         let text = text.to_string();
         Self { count, text }
     }
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub(crate) struct PingPongResponse {
-    text: String,
-    count: usize,
 }
 
 impl From<PingPongRequest> for PingPongResponse {
