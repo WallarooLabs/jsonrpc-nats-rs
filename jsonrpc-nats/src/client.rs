@@ -31,7 +31,7 @@ impl Client {
 }
 
 #[async_trait(?Send)]
-impl jsonrpc::service::JsonRpc2Service<jsonrpc::Request> for Client {
+impl JsonRpc2Service<jsonrpc::Request> for Client {
     type Response = jsonrpc::Response;
     type Error = Error;
 
