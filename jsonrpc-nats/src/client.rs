@@ -39,12 +39,6 @@ impl jsonrpc::service::JsonRpc2Service<jsonrpc::Request> for Client {
         let response = self.request(subject, payload).await?;
         let response = json::from_slice(&response)?;
 
-        // let response = if let Some(request) = request {
-        //     let subject = request.method.to_string();
-        //     let payload = json::to_vec(&request)?.into();
-        //     let response = self.request(subject, payload).await?;
-        //     json::from_slice(&response)?;
-
         Ok(response)
     }
 }

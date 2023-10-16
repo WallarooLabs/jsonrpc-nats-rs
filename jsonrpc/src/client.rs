@@ -53,7 +53,7 @@ where
     /// Makes JSON RPC call with given request and returns the recevied response
     /// # Errors
     /// Error could either transport, JSON serialization, or the error returned
-    /// by the RP call itself.
+    /// by the RPC call itself.
     #[tracing::instrument]
     pub async fn call_deprecated<R>(
         &mut self,
