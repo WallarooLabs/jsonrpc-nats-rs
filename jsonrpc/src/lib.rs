@@ -51,7 +51,7 @@ pub trait JsonRpc2Service: JsonRpc2 {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub enum JsonRpc2Signature {
+pub enum JsonRpc2Version {
     #[serde(rename = "2.0")]
     JsonRpc2,
 }

@@ -4,12 +4,12 @@ use super::*;
 #[serde(untagged)]
 pub enum Response {
     Success {
-        jsonrpc: JsonRpc2Signature,
+        jsonrpc: JsonRpc2Version,
         result: json::Value,
         id: json::Value,
     },
     Failure {
-        jsonrpc: JsonRpc2Signature,
+        jsonrpc: JsonRpc2Version,
         error: ErrorObject,
         id: json::Value,
     },
@@ -24,7 +24,7 @@ impl Response {
 
     pub fn success(result: json::Value, id: json::Value) -> Self {
         Self::Success {
-            jsonrpc: JsonRpc2Signature::JsonRpc2,
+            jsonrpc: JsonRpc2Version::JsonRpc2,
             result,
             id,
         }
@@ -32,7 +32,7 @@ impl Response {
 
     pub fn failure(error: ErrorObject, id: json::Value) -> Self {
         Self::Failure {
-            jsonrpc: JsonRpc2Signature::JsonRpc2,
+            jsonrpc: JsonRpc2Version::JsonRpc2,
             error,
             id,
         }
