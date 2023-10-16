@@ -1,0 +1,14 @@
+[package]
+name = "tower-jsonrpc"
+version = "0.1.0"
+edition = "2021"
+
+
+[dependencies]
+tower.workspace = true
+
+jsonrpc.workspace = true
+
+
+[lints]
+workspace = true
