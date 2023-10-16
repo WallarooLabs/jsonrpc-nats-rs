@@ -4,6 +4,7 @@
 use futures::StreamExt;
 
 use nats::service::endpoint::Endpoint;
+use nats::service::Service;
 use nats::service::ServiceExt;
 
 use super::*;
@@ -11,7 +12,7 @@ use super::*;
 #[derive(Debug)]
 pub struct Server {
     client: nats::Client,
-    service: nats::service::Service,
+    service: Service,
 }
 
 impl Server {
@@ -50,18 +51,49 @@ impl Server {
 
     pub async fn add_method<R>(&self) -> Result<Endpoint, nats::Error>
     where
+        R: JsonRpc2
+            + jsonrpc::service::JsonRpc2Service<
+                <R as JsonRpc2>::Request,
+                Response = <R as JsonRpc2>::Response,
+                Error = <R as JsonRpc2>::Error,
+            >,
+    {
+        self.service.endpoint(R::METHOD).await
+    }
+
+    pub async fn start_endpoint<R>(&self, mut ep: Endpoint, ctx: R)
+    where
+        R: JsonRpc2
+            + jsonrpc::service::JsonRpc2Service<
+                <R as JsonRpc2>::Request,
+                Response = <R as JsonRpc2>::Response,
+                Error = <R as JsonRpc2>::Error,
+            >,
+    {
+        while let Some(request) = ep.next().await {
+            let response = handle_one_request::<R>(&ctx, &request)
+                .await
+                .map_err(nats_service_error);
+            if let Err(publish) = request.respond(response).await {
+                tracing::error!(%publish, "Failed to send response");
+            }
+        }
+    }
+
+    pub async fn add_method_deprecated<R>(&self) -> Result<Endpoint, nats::Error>
+    where
         R: JsonRpc2Service,
     {
         let endpoint = self.service.endpoint(R::METHOD).await?;
         Ok(endpoint)
     }
 
-    pub async fn start_endpoint<R>(&self, mut ep: Endpoint, ctx: &R::Context)
+    pub async fn start_endpoint_deprecated<R>(&self, mut ep: Endpoint, ctx: &R::Context)
     where
-        R: JsonRpc2Service,
+        R: jsonrpc::JsonRpc2Service,
     {
         while let Some(request) = ep.next().await {
-            let response = handle_one_request::<R>(ctx, &request)
+            let response = handle_one_request_deprecated::<R>(ctx, &request)
                 .await
                 .map_err(nats_service_error);
             if let Err(publish) = request.respond(response).await {
@@ -71,12 +103,31 @@ impl Server {
     }
 }
 
-async fn handle_one_request<R>(
+async fn handle_one_request<R>(ctx: &R, request: &nats::service::Request) -> json::Result<Bytes>
+where
+    R: JsonRpc2
+        + jsonrpc::service::JsonRpc2Service<
+            <R as JsonRpc2>::Request,
+            Response = <R as JsonRpc2>::Response,
+            Error = <R as JsonRpc2>::Error,
+        >,
+{
+    let jsonrpc::Request { params, id, .. } = json::from_slice(&request.message.payload)?;
+    let request = params.unwrap_or_default();
+    let request = json::from_value::<<R as JsonRpc2>::Request>(request)?;
+    tracing::debug!(?request);
+    let result = ctx.call(request).await;
+    let response = jsonrpc::Response::from_result(id, result)?;
+    let buf = json::to_vec(&response)?;
+    Ok(buf.into())
+}
+
+async fn handle_one_request_deprecated<R>(
     ctx: &R::Context,
     request: &nats::service::Request,
 ) -> json::Result<bytes::Bytes>
 where
-    R: JsonRpc2Service,
+    R: jsonrpc::JsonRpc2Service,
 {
     let jsonrpc::Request { params, id, .. } = json::from_slice(&request.message.payload)?;
     let request = params
