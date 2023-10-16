@@ -5,12 +5,26 @@ pub(crate) struct PingPong;
 
 impl jsonrpc::JsonRpc2 for PingPong {
     const METHOD: &'static str = "pingpong";
-
     type Request = PingPongRequest;
-
     type Response = PingPongResponse;
-
     type Error = String;
+}
+
+#[jsonrpc::async_trait(?Send)]
+impl jsonrpc::service::JsonRpc2Service<<Self as jsonrpc::JsonRpc2>::Request> for PingPong {
+    type Response = <Self as jsonrpc::JsonRpc2>::Response;
+    type Error = <Self as jsonrpc::JsonRpc2>::Error;
+
+    async fn call(
+        &self,
+        request: <Self as jsonrpc::JsonRpc2>::Request,
+    ) -> Result<Self::Response, Self::Error> {
+        if request.text.len() < 6 {
+            Ok(request.into())
+        } else {
+            Err(format!("cannot process: {}", request.text))
+        }
+    }
 }
 
 #[jsonrpc::async_trait]
