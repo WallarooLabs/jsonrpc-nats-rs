@@ -2,7 +2,7 @@ use super::*;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Request {
-    pub jsonrpc: JsonRpc2Signature,
+    pub jsonrpc: JsonRpc2Version,
     pub method: Cow<'static, str>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub params: Option<json::Value>,
@@ -11,7 +11,7 @@ pub struct Request {
 
 impl Request {
     pub fn new(method: &'static str, params: Option<json::Value>, id: u64) -> Self {
-        let jsonrpc = JsonRpc2Signature::JsonRpc2;
+        let jsonrpc = JsonRpc2Version::JsonRpc2;
         let method = Cow::from(method);
         let id = json::Value::from(id);
 
