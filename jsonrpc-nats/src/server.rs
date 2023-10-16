@@ -1,5 +1,6 @@
 use futures::StreamExt;
 
+use nats::service::endpoint::Endpoint;
 use nats::service::ServiceExt;
 
 use super::*;
@@ -32,7 +33,7 @@ impl Server {
         Ok(Self { client, service })
     }
 
-    pub async fn add_method<R>(&self) -> Result<nats::service::endpoint::Endpoint, nats::Error>
+    pub async fn add_method<R>(&self) -> Result<Endpoint, nats::Error>
     where
         R: JsonRpc2Service,
     {
@@ -40,11 +41,8 @@ impl Server {
         Ok(endpoint)
     }
 
-    pub async fn start_endpoint<R>(
-        &self,
-        mut ep: nats::service::endpoint::Endpoint,
-        ctx: &R::Context,
-    ) where
+    pub async fn start_endpoint<R>(&self, mut ep: Endpoint, ctx: &R::Context)
+    where
         R: JsonRpc2Service,
     {
         while let Some(request) = ep.next().await {
