@@ -3,10 +3,10 @@ use super::*;
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Request {
     pub jsonrpc: JsonRpc2Version,
+    pub id: json::Value,
     pub method: Cow<'static, str>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub params: Option<json::Value>,
-    pub id: json::Value,
 }
 
 impl Request {
