@@ -23,10 +23,15 @@ mod error;
 mod request;
 mod response;
 
+/// Define a single JSONRPC function
 pub trait JsonRpc2 {
+    /// JSONRPC method name
     const METHOD: &'static str;
+    /// Shape of the request
     type Request: fmt::Debug + Serialize + de::DeserializeOwned;
+    /// Shape of the response
     type Response: fmt::Debug + Serialize + de::DeserializeOwned;
+    /// Shape of the error
     type Error: fmt::Debug + Serialize + de::DeserializeOwned;
 }
 
