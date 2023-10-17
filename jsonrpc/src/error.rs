@@ -132,19 +132,3 @@ where
         }
     }
 }
-
-pub trait TransportError<T, E>
-where
-    E: StdError + 'static,
-{
-    fn transport_error(self) -> Result<T, Error<E>>;
-}
-
-impl<T, E> TransportError<T, E> for Result<T, E>
-where
-    E: StdError + 'static,
-{
-    fn transport_error(self) -> Result<T, Error<E>> {
-        self.map_err(Error::transport)
-    }
-}
