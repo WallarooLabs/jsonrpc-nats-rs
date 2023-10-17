@@ -1,5 +1,4 @@
 use std::borrow::Cow;
-use std::error::Error as StdError;
 use std::fmt;
 use std::sync::atomic::{AtomicU64, Ordering};
 
@@ -11,7 +10,6 @@ use thiserror::Error;
 pub use async_trait::async_trait;
 
 pub use self::client::AsyncClient;
-pub use self::error::Error;
 pub use self::error::ErrorObject;
 pub use self::request::Request;
 pub use self::response::Payload;
