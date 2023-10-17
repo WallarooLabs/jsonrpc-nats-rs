@@ -1,10 +1,13 @@
-use jsonrpc_nats::Server;
+use super::*;
 
-use crate::pingpong;
+pub(super) async fn server(addrs: String) -> anyhow::Result<()> {
+    let server = Nats::new(addrs)
+        .await?
+        .server()
+        .await
+        .map_err(|e| anyhow::anyhow!(e))?;
 
-pub(super) async fn server(addr: String) -> anyhow::Result<()> {
-    let server = Server::new(addr).await.map_err(|e| anyhow::anyhow!(e))?;
-    println!("Server {server:?}");
+    tracing::info!(?server, "Starting");
 
     let ctx = pingpong::PingPong;
 

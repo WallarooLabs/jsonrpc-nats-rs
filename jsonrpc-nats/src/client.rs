@@ -6,16 +6,9 @@ pub struct Client {
 }
 
 impl Client {
-    pub async fn new(addr: impl nats::ToServerAddrs) -> Result<Self, nats::ConnectError> {
-        nats::connect(addr)
-            .await
-            .map(|client| Self { inner: client })
-    }
-
-    pub async fn client(
-        addr: impl nats::ToServerAddrs,
-    ) -> Result<AsyncClient<Self>, nats::ConnectError> {
-        Self::new(addr).await.map(AsyncClient::with_transport)
+    pub fn new(client: nats::Client) -> Self {
+        let inner = client.clone();
+        Self { inner }
     }
 
     async fn request(&self, subject: String, payload: Bytes) -> Result<Bytes, nats::RequestError> {

@@ -22,8 +22,7 @@ impl Server {
         &self.client
     }
 
-    pub async fn new(addr: impl nats::ToServerAddrs) -> Result<Self, nats::Error> {
-        let client = nats::connect(addr).await?;
+    pub async fn new(client: nats::Client) -> Result<Self, nats::Error> {
         let description = option_env!("CARGO_PKG_DESCRIPTION").map(ToString::to_string);
         let name = env!("CARGO_PKG_NAME").to_string();
         let version = env!("CARGO_PKG_VERSION").to_string();
@@ -35,9 +34,11 @@ impl Server {
             metadata: None,
             queue_group: None,
         };
-        let service = client.add_service(config).await?;
 
-        Ok(Self { client, service })
+        client
+            .add_service(config)
+            .await
+            .map(|service| Self { client, service })
     }
 
     pub async fn add_method<R>(&self) -> Result<Endpoint, nats::Error>
