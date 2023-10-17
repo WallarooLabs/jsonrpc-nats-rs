@@ -13,6 +13,7 @@ jsonrpc-nats.workspace = true
 serde.workspace = true
 
 clap = { version = "4.4", features = ["derive", "deprecated"] }
+tracing-subscriber = { version = "0.3", features = ["env-filter", "time"] }
 
 
 [lints]

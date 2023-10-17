@@ -1,4 +1,6 @@
 use clap::Parser;
+use tracing_subscriber::fmt;
+use tracing_subscriber::EnvFilter;
 
 mod client;
 mod server;
@@ -41,5 +43,6 @@ impl Command {
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
+    fmt().with_env_filter(EnvFilter::from_default_env()).init();
     Cli::parse().dispatch().await
 }
