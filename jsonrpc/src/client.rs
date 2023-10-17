@@ -1,5 +1,7 @@
 use super::*;
 
+/// Generic JSONRPC Client object that can be used with different transports `T`
+///
 #[derive(Debug)]
 pub struct AsyncClient<T> {
     transport: T,
@@ -17,11 +19,18 @@ where
     T: service::JsonRpc2Service<Request, Response = Response>,
     T::Error: From<json::Error>,
 {
+    /// Create new `AsyncClient` instance with a given `transport`.
+    ///
     pub fn with_transport(transport: T) -> Self {
         let id = AtomicU64::new(0);
         Self { transport, id }
     }
 
+    /// Execute a JSONRPC call, desribed by `R as JsonRpc2`
+    /// # Errors
+    /// The outer error is the transport error
+    /// The inner error is the error object defined by the `R as JsonRpc2` call itself
+    ///
     pub async fn call<R>(
         &self,
         request: R::Request,

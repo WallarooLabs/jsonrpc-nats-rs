@@ -18,11 +18,7 @@ impl Client {
         Self::new(addr).await.map(AsyncClient::with_transport)
     }
 
-    pub async fn request(
-        &self,
-        subject: String,
-        payload: Bytes,
-    ) -> Result<Bytes, nats::RequestError> {
+    async fn request(&self, subject: String, payload: Bytes) -> Result<Bytes, nats::RequestError> {
         self.inner
             .request(subject, payload)
             .await

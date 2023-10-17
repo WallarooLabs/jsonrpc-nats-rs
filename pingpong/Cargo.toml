@@ -8,9 +8,10 @@ edition = "2021"
 anyhow.workspace = true
 futures.workspace = true
 tokio.workspace = true
+serde.workspace = true
+
 jsonrpc.workspace = true
 jsonrpc-nats.workspace = true
-serde.workspace = true
 
 clap = { version = "4.4", features = ["derive", "deprecated"] }
 tracing-subscriber = { version = "0.3", features = ["env-filter", "time"] }
