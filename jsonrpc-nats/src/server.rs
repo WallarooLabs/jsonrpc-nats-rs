@@ -4,6 +4,8 @@
 use futures::StreamExt;
 
 use nats::service::endpoint::Endpoint;
+use nats::service::error::Error;
+use nats::service::Config;
 use nats::service::Service;
 use nats::service::ServiceExt;
 
@@ -21,11 +23,11 @@ impl Server {
     }
 
     pub async fn new(addr: impl nats::ToServerAddrs) -> Result<Self, nats::Error> {
-        let client = async_nats::connect(addr).await?;
+        let client = nats::connect(addr).await?;
         let description = option_env!("CARGO_PKG_DESCRIPTION").map(ToString::to_string);
         let name = env!("CARGO_PKG_NAME").to_string();
         let version = env!("CARGO_PKG_VERSION").to_string();
-        let config = nats::service::Config {
+        let config = Config {
             name,
             description,
             version,
@@ -33,23 +35,14 @@ impl Server {
             metadata: None,
             queue_group: None,
         };
-        // let endpoints = HashMap::new();
         let service = client.add_service(config).await?;
-        Ok(Self {
-            client,
-            service,
-            // endpoints,
-        })
+
+        Ok(Self { client, service })
     }
 
     pub async fn add_method<R>(&self) -> Result<Endpoint, nats::Error>
     where
-        R: JsonRpc2
-            + JsonRpc2Service<
-                <R as JsonRpc2>::Request,
-                Response = <R as JsonRpc2>::Response,
-                Error = <R as JsonRpc2>::Error,
-            >,
+        R: JsonRpc2,
     {
         self.service.endpoint(R::METHOD).await
     }
@@ -64,7 +57,7 @@ impl Server {
             >,
     {
         while let Some(request) = ep.next().await {
-            let response = handle_one_request::<R>(&ctx, &request)
+            let response = handle_one_request::<R>(&ctx, &request.message.payload)
                 .await
                 .map_err(nats_service_error);
             if let Err(publish) = request.respond(response).await {
@@ -74,7 +67,7 @@ impl Server {
     }
 }
 
-async fn handle_one_request<R>(ctx: &R, request: &nats::service::Request) -> json::Result<Bytes>
+async fn handle_one_request<R>(ctx: &R, request: &[u8]) -> json::Result<Bytes>
 where
     R: JsonRpc2
         + JsonRpc2Service<
@@ -83,7 +76,7 @@ where
             Error = <R as JsonRpc2>::Error,
         >,
 {
-    let jsonrpc::Request { params, id, .. } = json::from_slice(&request.message.payload)?;
+    let jsonrpc::Request { params, id, .. } = json::from_slice(request)?;
     let request = params.unwrap_or_default();
     let request = json::from_value::<<R as JsonRpc2>::Request>(request)?;
     tracing::debug!(?request);
@@ -93,8 +86,8 @@ where
     Ok(buf.into())
 }
 
-fn nats_service_error(error: json::Error) -> nats::service::error::Error {
-    nats::service::error::Error {
+fn nats_service_error(error: json::Error) -> Error {
+    Error {
         status: error.to_string(),
         code: usize::MAX,
     }
