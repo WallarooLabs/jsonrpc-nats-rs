@@ -60,8 +60,8 @@ impl Server {
             let response = handle_one_request::<R>(&ctx, &request.message.payload)
                 .await
                 .map_err(nats_service_error);
-            if let Err(publish) = request.respond(response).await {
-                tracing::error!(%publish, "Failed to send response");
+            if let Err(error) = request.respond(response).await {
+                tracing::error!(%error, "Failed to send response");
             }
         }
     }
@@ -79,11 +79,13 @@ where
     let jsonrpc::Request { params, id, .. } = json::from_slice(request)?;
     let request = params.unwrap_or_default();
     let request = json::from_value::<<R as JsonRpc2>::Request>(request)?;
-    tracing::debug!(?request);
+
+    tracing::trace!(?request);
     let result = ctx.call(request).await;
+    tracing::trace!(?result);
+
     let response = jsonrpc::Response::from_result(id, result)?;
-    let buf = json::to_vec(&response)?;
-    Ok(buf.into())
+    json::to_vec(&response).map(Bytes::from)
 }
 
 fn nats_service_error(error: json::Error) -> Error {
