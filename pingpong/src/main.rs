@@ -1,4 +1,5 @@
 use clap::Parser;
+use jsonrpc_nats::Nats;
 use tracing_subscriber::fmt;
 use tracing_subscriber::EnvFilter;
 
