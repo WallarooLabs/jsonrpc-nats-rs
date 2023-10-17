@@ -2,10 +2,10 @@ use super::*;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Response {
-    jsonrpc: JsonRpc2Version,
-    id: json::Value,
+    pub jsonrpc: JsonRpc2Version,
+    pub id: json::Value,
     #[serde(flatten)]
-    payload: Payload,
+    pub payload: Payload,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -20,7 +20,7 @@ impl Response {
         &self.id
     }
 
-    pub fn success(result: json::Value, id: json::Value) -> Self {
+    pub fn success(id: json::Value, result: json::Value) -> Self {
         let jsonrpc = JsonRpc2Version::JsonRpc2;
         let payload = Payload::success(result);
         Self {
@@ -30,7 +30,7 @@ impl Response {
         }
     }
 
-    pub fn failure(error: ErrorObject, id: json::Value) -> Self {
+    pub fn failure(id: json::Value, error: ErrorObject) -> Self {
         let jsonrpc = JsonRpc2Version::JsonRpc2;
         let payload = Payload::failure(error);
         Self {
@@ -40,15 +40,8 @@ impl Response {
         }
     }
 
-    pub fn from_json_error(error: json::Error, id: json::Value) -> Self {
-        Self::failure(ErrorObject::parse_error(error), id)
-    }
-
-    pub fn failure2<T>(error: Error<T>, id: json::Value) -> Self
-    where
-        T: StdError + 'static,
-    {
-        Self::failure(ErrorObject::from(error), id)
+    pub fn from_json_error(id: json::Value, error: json::Error) -> Self {
+        Self::failure(id, ErrorObject::parse_error(error))
     }
 
     pub fn into_result(self) -> Result<json::Value, ErrorObject> {
@@ -68,25 +61,25 @@ impl Response {
         E: Serialize,
     {
         match result {
-            Ok(success) => Self::serialize_success(success, id),
-            Err(failure) => Self::serialize_failure(failure, id),
+            Ok(success) => Self::serialize_success(id, success),
+            Err(failure) => Self::serialize_failure(id, failure),
         }
     }
 
-    pub fn serialize_success<T>(success: T, id: json::Value) -> json::Result<Self>
+    pub fn serialize_success<T>(id: json::Value, success: T) -> json::Result<Self>
     where
         T: Serialize,
     {
-        json::to_value(success).map(|result| Self::success(result, id))
+        json::to_value(success).map(|result| Self::success(id, result))
     }
 
-    pub fn serialize_failure<E>(failure: E, id: json::Value) -> json::Result<Self>
+    pub fn serialize_failure<E>(id: json::Value, failure: E) -> json::Result<Self>
     where
         E: Serialize,
     {
         json::to_value(failure)
             .map(ErrorObject::with_data)
-            .map(|error| Self::failure(error, id))
+            .map(|error| Self::failure(id, error))
     }
 }
 
