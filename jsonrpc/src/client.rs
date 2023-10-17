@@ -15,30 +15,28 @@ impl<T> AsyncClient<T> {
 impl<T> AsyncClient<T>
 where
     T: service::JsonRpc2Service<Request, Response = Response>,
-    T::Error: fmt::Debug,
+    T::Error: From<json::Error>,
 {
     pub fn with_transport(transport: T) -> Self {
         let id = AtomicU64::new(0);
         Self { transport, id }
     }
 
-    pub async fn call<R>(&self, request: R::Request) -> Result<R::Response, R::Error>
+    pub async fn call<R>(
+        &self,
+        request: R::Request,
+    ) -> Result<Result<R::Response, R::Error>, T::Error>
     where
         R: JsonRpc2,
     {
         let id = self.id().into();
-        let request = Request::from_request::<R>(id, Some(request))
-            .expect("Failed to convert to JSONRPC REQUEST");
-        let response = self
-            .transport
-            .call(request)
-            .await
-            .expect("Transport failed");
-
-        response
-            .into_typed_result::<R>()
-            .expect("Failed to convert from JSOM RESPONSE")
+        let request = Request::from_request::<R>(id, Some(request))?;
+        let response = self.transport.call(request).await?;
+        let response = response
+            .into_typed_result::<R>()?
             .tap_ok(|response| tracing::trace!(?response))
-            .tap_err(|error| tracing::trace!(?error))
+            .tap_err(|error| tracing::trace!(?error));
+
+        Ok(response)
     }
 }
