@@ -10,8 +10,13 @@ mod pingpong;
 
 #[derive(Debug, Parser)]
 struct Cli {
-    #[arg(long, help = "NATS address", default_value = "localhost")]
-    addr: String,
+    #[arg(
+        long,
+        help = "NATS address",
+        default_value = "nats://localhost:4222",
+        alias = "addr"
+    )]
+    addrs: String,
     #[clap(subcommand)]
     command: Command,
 }
@@ -29,15 +34,15 @@ enum Command {
 
 impl Cli {
     async fn dispatch(self) -> anyhow::Result<()> {
-        self.command.dispatch(self.addr).await
+        self.command.dispatch(self.addrs).await
     }
 }
 
 impl Command {
-    async fn dispatch(self, addr: String) -> anyhow::Result<()> {
+    async fn dispatch(self, addrs: String) -> anyhow::Result<()> {
         match self {
-            Self::Client { text, count } => client::client(addr, text, count).await,
-            Self::Server => server::server(addr).await,
+            Self::Client { text, count } => client::client(addrs, text, count).await,
+            Self::Server => server::server(addrs).await,
         }
     }
 }
