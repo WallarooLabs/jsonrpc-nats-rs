@@ -35,6 +35,10 @@ impl Server {
             queue_group: None,
         };
 
+        Self::with_config(client, config).await
+    }
+
+    pub async fn with_config(client: nats::Client, config: Config) -> Result<Self, nats::Error> {
         client
             .add_service(config)
             .await
