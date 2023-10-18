@@ -9,7 +9,8 @@ pub(super) async fn server(addrs: String) -> anyhow::Result<()> {
 
     tracing::info!(?server, "Starting");
 
-    let ctx = pingpong::PingPong;
+    // let ctx = pingpong::PingPong;
+    let ctx = count::Count::default();
 
     server
         .start_single_rpc_method(ctx)
