@@ -6,6 +6,7 @@ use tracing_subscriber::EnvFilter;
 mod client;
 mod server;
 
+mod count;
 mod pingpong;
 
 #[derive(Debug, Parser)]
@@ -24,12 +25,21 @@ struct Cli {
 #[derive(Debug, clap::Subcommand)]
 enum Command {
     Client {
+        #[clap(subcommand)]
+        method: Method,
+    },
+    Server,
+}
+
+#[derive(Debug, clap::Subcommand)]
+enum Method {
+    Count,
+    Ping {
         #[arg(help = "Ping text")]
         text: String,
         #[arg(help = "Ping count")]
         count: usize,
     },
-    Server,
 }
 
 impl Cli {
@@ -41,7 +51,7 @@ impl Cli {
 impl Command {
     async fn dispatch(self, addrs: String) -> anyhow::Result<()> {
         match self {
-            Self::Client { text, count } => client::client(addrs, text, count).await,
+            Self::Client { method } => client::client(addrs, method).await,
             Self::Server => server::server(addrs).await,
         }
     }
