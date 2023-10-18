@@ -70,6 +70,20 @@ impl Server {
             }
         }
     }
+
+    pub async fn start_single_rpc_method<R>(&self, ctx: R) -> Result<(), nats::Error>
+    where
+        R: JsonRpc2
+            + JsonRpc2Service<
+                <R as JsonRpc2>::Request,
+                Response = <R as JsonRpc2>::Response,
+                Error = <R as JsonRpc2>::Error,
+            >,
+    {
+        let ep = self.add_method::<R>().await?;
+        self.start_endpoint(ep, ctx).await;
+        Ok(())
+    }
 }
 
 async fn handle_one_request<R>(ctx: &R, request: &[u8]) -> json::Result<Bytes>

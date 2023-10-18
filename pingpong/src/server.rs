@@ -11,12 +11,8 @@ pub(super) async fn server(addrs: String) -> anyhow::Result<()> {
 
     let ctx = pingpong::PingPong;
 
-    let ep = server
-        .add_method::<pingpong::PingPong>()
+    server
+        .start_single_rpc_method(ctx)
         .await
-        .map_err(|e| anyhow::anyhow!(e))?;
-
-    server.start_endpoint(ep, ctx).await;
-
-    Ok(())
+        .map_err(|e| anyhow::anyhow!(e))
 }
