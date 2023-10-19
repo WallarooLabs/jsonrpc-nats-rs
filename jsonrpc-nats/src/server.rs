@@ -1,6 +1,3 @@
-// use std::collections::HashMap;
-
-// use futures::FutureExt;
 use futures::StreamExt;
 
 use nats::service::endpoint::Endpoint;
@@ -52,7 +49,7 @@ impl Server {
         self.service.endpoint(R::METHOD).await
     }
 
-    pub async fn start_endpoint<R>(&self, mut ep: Endpoint, ctx: R)
+    pub async fn start_endpoint<R>(&self, mut endpoint: Endpoint, ctx: R)
     where
         R: JsonRpc2
             + JsonRpc2Service<
@@ -61,7 +58,7 @@ impl Server {
                 Error = <R as JsonRpc2>::Error,
             >,
     {
-        while let Some(request) = ep.next().await {
+        while let Some(request) = endpoint.next().await {
             let response = handle_one_request::<R>(&ctx, &request.message.payload)
                 .await
                 .map_err(nats_service_error);
@@ -80,8 +77,8 @@ impl Server {
                 Error = <R as JsonRpc2>::Error,
             >,
     {
-        let ep = self.add_method::<R>().await?;
-        self.start_endpoint(ep, ctx).await;
+        let endpoint = self.add_method::<R>().await?;
+        self.start_endpoint(endpoint, ctx).await;
         Ok(())
     }
 }
