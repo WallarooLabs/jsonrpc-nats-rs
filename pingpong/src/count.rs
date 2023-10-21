@@ -5,7 +5,7 @@ use jsonrpc::JsonRpc2Service;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Default, JsonRpc2)]
-#[jsonrpc(method = "count", error = "String")]
+#[jsonrpc(method = "count", error = "String", client)]
 pub(crate) struct Count {
     count: AtomicU64,
 }
