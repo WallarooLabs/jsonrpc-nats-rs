@@ -24,8 +24,6 @@ struct Crates {
     jsonrpc: Path,
     #[darling(default = "Self::default_serde_json")]
     serde_json: Path,
-    #[darling(default = "Self::default_std")]
-    std: Path,
 }
 
 impl JsonRpcAttrs {
@@ -67,7 +65,6 @@ impl Default for Crates {
         Self {
             jsonrpc: Self::default_jsonrpc(),
             serde_json: Self::default_serde_json(),
-            std: Self::default_std(),
         }
     }
 }
@@ -79,10 +76,6 @@ impl Crates {
 
     fn default_serde_json() -> Path {
         parse_quote!(::serde_json)
-    }
-
-    fn default_std() -> Path {
-        parse_quote!(::std)
     }
 }
 
@@ -135,7 +128,6 @@ fn derive_client(ast: &DeriveInput, attrs: &JsonRpcAttrs) -> proc_macro2::TokenS
     let jsonrpc = attrs.jsonrpc();
     let clientext = Ident::new(&format!("{}Ext", name), name.span());
     let serde_json = &attrs.crates.serde_json;
-    let std = &attrs.crates.std;
 
     let method = Ident::new(attrs.method(), name.span());
     let request = attrs.request(name);
@@ -147,24 +139,24 @@ fn derive_client(ast: &DeriveInput, attrs: &JsonRpcAttrs) -> proc_macro2::TokenS
         pub trait #clientext<T>
         where
             T: #jsonrpc::JsonRpc2Service<#jsonrpc::Request, Response = #jsonrpc::Response>,
-            T::Error: #std::convert::From<#serde_json::Error>,
+            T::Error: ::core::convert::From<#serde_json::Error>,
         {
             async fn #method(
                 &self,
                 request: #request,
-            ) -> #std::result::Result<#std::result::Result<#response, #error>, T::Error>;
+            ) -> ::core::result::Result<::core::result::Result<#response, #error>, T::Error>;
         }
 
         #[#jsonrpc::async_trait(?Send)]
         impl<T> #clientext<T> for #jsonrpc::AsyncClient<T>
         where
             T: #jsonrpc::JsonRpc2Service<#jsonrpc::Request, Response = #jsonrpc::Response>,
-            T::Error: #std::convert::From<#serde_json::Error>,
+            T::Error: ::core::convert::From<#serde_json::Error>,
         {
             async fn #method(
                 &self,
                 request: #request,
-            ) -> #std::result::Result<#std::result::Result<#response, #error>, T::Error> {
+            ) -> ::core::result::Result<::core::result::Result<#response, #error>, T::Error> {
                 self.call::<#name>(request).await
             }
         }
