@@ -1,5 +1,7 @@
 use super::*;
 
+use pingpong::PingPongExt;
+
 pub(super) async fn client(
     addrs: String,
     method: Method,
@@ -18,8 +20,9 @@ pub(super) async fn client(
             let response = client.call::<pingpong::PingPong>(r1).await?;
             tracing::info!(?response);
 
-            let r2 = pingpong::PingPongRequest::new(count - 1, &text);
-            let response = client.call::<pingpong::PingPong>(r2).await?;
+            // let r2 = pingpong::PingPongRequest::new(count - 1, &text);
+            // let response = client.call::<pingpong::PingPong>(r2).await?;
+            let response = client.pingpong(count, text).await?;
             tracing::info!(?response);
         }
     }
