@@ -28,17 +28,36 @@ struct Crates {
 }
 
 impl JsonRpcAttrs {
-    fn extract(self, name: &Ident) -> (String, Ident, Ident, Ident, Crates) {
-        let request = self.request.unwrap_or_else(|| format!("{}Request", name));
-        let response = self.response.unwrap_or_else(|| format!("{}Response", name));
-        let error = self.error.unwrap_or_else(|| format!("{}Error", name));
-        (
-            self.method,
-            Ident::new(&request, name.span()),
-            Ident::new(&response, name.span()),
-            Ident::new(&error, name.span()),
-            self.crates,
-        )
+    fn method(&self) -> &str {
+        &self.method
+    }
+
+    fn request(&self, name: &Ident) -> Ident {
+        if let Some(request) = &self.request {
+            Ident::new(request, name.span())
+        } else {
+            Ident::new(&format!("{}Request", name), name.span())
+        }
+    }
+
+    fn response(&self, name: &Ident) -> Ident {
+        if let Some(response) = &self.response {
+            Ident::new(response, name.span())
+        } else {
+            Ident::new(&format!("{}Response", name), name.span())
+        }
+    }
+
+    fn error(&self, name: &Ident) -> Ident {
+        if let Some(error) = &self.error {
+            Ident::new(error, name.span())
+        } else {
+            Ident::new(&format!("{}Error", name), name.span())
+        }
+    }
+
+    fn jsonrpc(&self) -> &Path {
+        &self.crates.jsonrpc
     }
 }
 
@@ -62,11 +81,11 @@ impl Crates {
 }
 
 #[proc_macro_derive(JsonRpc2, attributes(jsonrpc))]
-pub fn derive_jsonrpc2(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
-    impl_jsonrpc2_macro(input.into()).into()
+pub fn derive(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
+    derive2(input.into()).into()
 }
 
-fn impl_jsonrpc2_macro(input: proc_macro2::TokenStream) -> proc_macro2::TokenStream {
+fn derive2(input: proc_macro2::TokenStream) -> proc_macro2::TokenStream {
     let ast: DeriveInput = match syn::parse2(input) {
         Ok(ast) => ast,
         Err(err) => return err.to_compile_error(),
@@ -77,12 +96,23 @@ fn impl_jsonrpc2_macro(input: proc_macro2::TokenStream) -> proc_macro2::TokenStr
         Err(err) => return err.write_errors(),
     };
 
-    let name = &ast.ident;
-
-    let (method, request, response, error, crates) = attrs.extract(name);
-    let jsonrpc = crates.jsonrpc;
+    let jsonrpc2 = derive_jsonrpc2(&ast, &attrs);
 
     quote!(
+        #jsonrpc2
+    )
+}
+
+fn derive_jsonrpc2(ast: &DeriveInput, attrs: &JsonRpcAttrs) -> proc_macro2::TokenStream {
+    let name = &ast.ident;
+    let jsonrpc = attrs.jsonrpc();
+    let method = attrs.method();
+    let request = attrs.request(name);
+    let response = attrs.response(name);
+    let error = attrs.error(name);
+
+    quote!(
+        #[automatically_derived]
         impl #jsonrpc::JsonRpc2 for #name {
             const METHOD: &'static str = #method;
             type Request = #request;
