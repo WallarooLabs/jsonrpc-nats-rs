@@ -2,12 +2,12 @@ use jsonrpc::JsonRpc2;
 use jsonrpc::JsonRpc2Service;
 use serde::{Deserialize, Serialize};
 
-pub(crate) use impls::PingPongExt;
+// pub(crate) use impls::PingPongExt;
 
 mod impls;
 
 #[derive(Debug, JsonRpc2)]
-#[jsonrpc(method = "pingpong", error = "String")]
+#[jsonrpc(method = "pingpong", error = "String", client)]
 pub(crate) struct PingPong;
 
 #[derive(Debug, Serialize, Deserialize)]
