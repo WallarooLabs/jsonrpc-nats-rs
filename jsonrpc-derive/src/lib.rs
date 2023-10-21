@@ -1,12 +1,9 @@
-use syn::Ident;
-use syn::Path;
-// use syn::Data;
-use syn::DeriveInput;
-// use syn::Fields;
 use darling::FromDeriveInput;
 use darling::FromMeta;
-use quote::quote;
 use syn::parse_quote;
+use syn::DeriveInput;
+use syn::Ident;
+use syn::Path;
 
 #[derive(Debug, FromDeriveInput)]
 #[darling(attributes(jsonrpc))]
@@ -17,14 +14,18 @@ struct JsonRpcAttrs {
     error: Option<String>,
     #[darling(default)]
     crates: Crates,
+    #[darling(default)]
+    client: bool,
 }
 
 #[derive(Debug, FromMeta)]
 struct Crates {
     #[darling(default = "Self::default_jsonrpc")]
     jsonrpc: Path,
+    #[darling(default = "Self::default_serde_json")]
+    serde_json: Path,
     #[darling(default = "Self::default_std")]
-    _std: Path,
+    std: Path,
 }
 
 impl JsonRpcAttrs {
@@ -65,7 +66,8 @@ impl Default for Crates {
     fn default() -> Self {
         Self {
             jsonrpc: Self::default_jsonrpc(),
-            _std: Self::default_std(),
+            serde_json: Self::default_serde_json(),
+            std: Self::default_std(),
         }
     }
 }
@@ -73,6 +75,10 @@ impl Default for Crates {
 impl Crates {
     fn default_jsonrpc() -> Path {
         parse_quote!(::jsonrpc)
+    }
+
+    fn default_serde_json() -> Path {
+        parse_quote!(::serde_json)
     }
 
     fn default_std() -> Path {
@@ -97,9 +103,11 @@ fn derive2(input: proc_macro2::TokenStream) -> proc_macro2::TokenStream {
     };
 
     let jsonrpc2 = derive_jsonrpc2(&ast, &attrs);
+    let client = attrs.client.then(|| derive_client(&ast, &attrs));
 
-    quote!(
+    quote::quote!(
         #jsonrpc2
+        #client
     )
 }
 
@@ -111,7 +119,7 @@ fn derive_jsonrpc2(ast: &DeriveInput, attrs: &JsonRpcAttrs) -> proc_macro2::Toke
     let response = attrs.response(name);
     let error = attrs.error(name);
 
-    quote!(
+    quote::quote!(
         #[automatically_derived]
         impl #jsonrpc::JsonRpc2 for #name {
             const METHOD: &'static str = #method;
@@ -119,5 +127,47 @@ fn derive_jsonrpc2(ast: &DeriveInput, attrs: &JsonRpcAttrs) -> proc_macro2::Toke
             type Response = #response;
             type Error = #error;
         }
+    )
+}
+
+fn derive_client(ast: &DeriveInput, attrs: &JsonRpcAttrs) -> proc_macro2::TokenStream {
+    let name = &ast.ident;
+    let jsonrpc = attrs.jsonrpc();
+    let clientext = Ident::new(&format!("{}Ext", name), name.span());
+    let serde_json = &attrs.crates.serde_json;
+    let std = &attrs.crates.std;
+
+    let method = Ident::new(attrs.method(), name.span());
+    let request = attrs.request(name);
+    let response = attrs.response(name);
+    let error = attrs.error(name);
+
+    quote::quote!(
+        #[#jsonrpc::async_trait(?Send)]
+        pub trait #clientext<T>
+        where
+            T: #jsonrpc::JsonRpc2Service<#jsonrpc::Request, Response = #jsonrpc::Response>,
+            T::Error: #std::convert::From<#serde_json::Error>,
+        {
+            async fn #method(
+                &self,
+                request: #request,
+            ) -> #std::result::Result<#std::result::Result<#response, #error>, T::Error>;
+        }
+
+        #[#jsonrpc::async_trait(?Send)]
+        impl<T> #clientext<T> for #jsonrpc::AsyncClient<T>
+        where
+            T: #jsonrpc::JsonRpc2Service<#jsonrpc::Request, Response = #jsonrpc::Response>,
+            T::Error: #std::convert::From<#serde_json::Error>,
+        {
+            async fn #method(
+                &self,
+                request: #request,
+            ) -> #std::result::Result<#std::result::Result<#response, #error>, T::Error> {
+                self.call::<#name>(request).await
+            }
+        }
+
     )
 }
