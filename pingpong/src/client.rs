@@ -1,5 +1,6 @@
 use super::*;
 
+use count::CountExt;
 use pingpong::PingPongExt;
 
 pub(super) async fn client(addrs: String, method: Method) -> anyhow::Result<()> {
@@ -8,7 +9,7 @@ pub(super) async fn client(addrs: String, method: Method) -> anyhow::Result<()> 
     match method {
         Method::Count => {
             let r = count::CountRequest;
-            let response = client.call::<count::Count>(r).await?;
+            let response = client.count(r).await?;
             tracing::info!(?response);
         }
         Method::Ping { text, count } => {
