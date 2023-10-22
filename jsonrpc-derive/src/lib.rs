@@ -5,6 +5,11 @@ use syn::DeriveInput;
 use syn::Ident;
 use syn::Path;
 
+#[proc_macro_derive(JsonRpc2, attributes(jsonrpc))]
+pub fn derive(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
+    derive2(input.into()).into()
+}
+
 #[derive(Debug, FromDeriveInput)]
 #[darling(attributes(jsonrpc))]
 struct JsonRpcAttrs {
@@ -79,11 +84,6 @@ impl Crates {
     }
 }
 
-#[proc_macro_derive(JsonRpc2, attributes(jsonrpc))]
-pub fn derive(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
-    derive2(input.into()).into()
-}
-
 fn derive2(input: proc_macro2::TokenStream) -> proc_macro2::TokenStream {
     let ast: DeriveInput = match syn::parse2(input) {
         Ok(ast) => ast,
@@ -143,7 +143,7 @@ fn derive_client(ast: &DeriveInput, attrs: &JsonRpcAttrs) -> proc_macro2::TokenS
         {
             async fn #method(
                 &self,
-                request: #request,
+                request: impl ::core::convert::Into<#request>,
             ) -> ::core::result::Result<::core::result::Result<#response, #error>, T::Error>;
         }
 
@@ -155,9 +155,9 @@ fn derive_client(ast: &DeriveInput, attrs: &JsonRpcAttrs) -> proc_macro2::TokenS
         {
             async fn #method(
                 &self,
-                request: #request,
+                request: impl ::core::convert::Into<#request>,
             ) -> ::core::result::Result<::core::result::Result<#response, #error>, T::Error> {
-                self.call::<#name>(request).await
+                self.call::<#name>(request.into()).await
             }
         }
 
