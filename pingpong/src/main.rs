@@ -8,6 +8,7 @@ mod server;
 
 mod count;
 mod pingpong;
+mod simple;
 
 #[derive(Debug, Parser)]
 struct Cli {
@@ -40,6 +41,7 @@ enum Method {
         #[arg(help = "Ping count")]
         count: usize,
     },
+    Simple,
 }
 
 impl Cli {
