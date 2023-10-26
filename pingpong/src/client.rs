@@ -2,6 +2,7 @@ use super::*;
 
 use count::CountExt;
 use pingpong::PingPongExt;
+use simple::SimpleExt;
 
 pub(super) async fn client(addrs: String, method: Method) -> anyhow::Result<()> {
     let client = Nats::new(addrs).await?.client();
@@ -19,6 +20,10 @@ pub(super) async fn client(addrs: String, method: Method) -> anyhow::Result<()> 
 
             let r2 = pingpong::PingPongRequest::new(count - 1, &text);
             let response = client.pingpong(r2).await?;
+            tracing::info!(?response);
+        }
+        Method::Simple => {
+            let response = client.simple(()).await?;
             tracing::info!(?response);
         }
     }
