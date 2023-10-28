@@ -7,6 +7,7 @@ mod client;
 mod server;
 
 mod count;
+mod multiarg;
 mod pingpong;
 mod simple;
 

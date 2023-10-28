@@ -1,9 +1,11 @@
 use darling::FromDeriveInput;
 use darling::FromMeta;
 use syn::parse_quote;
+use syn::parse_str;
 use syn::DeriveInput;
 use syn::Ident;
 use syn::Path;
+use syn::Type;
 
 #[proc_macro_derive(JsonRpc2, attributes(jsonrpc))]
 pub fn derive(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
@@ -14,9 +16,9 @@ pub fn derive(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
 #[darling(attributes(jsonrpc))]
 struct JsonRpcAttrs {
     method: String,
-    request: Option<String>,
-    response: Option<String>,
-    error: Option<String>,
+    request: Option<Type>,
+    response: Option<Type>,
+    error: Option<Type>,
     #[darling(default)]
     crates: Crates,
     #[darling(default)]
@@ -36,28 +38,22 @@ impl JsonRpcAttrs {
         &self.method
     }
 
-    fn request(&self, name: &Ident) -> Ident {
-        if let Some(request) = &self.request {
-            Ident::new(request, name.span())
-        } else {
-            Ident::new(&format!("{}Request", name), name.span())
-        }
+    fn request(&self, name: &Ident) -> Type {
+        self.request
+            .clone()
+            .unwrap_or_else(|| parse_str(&format!("{name}Request")).unwrap())
     }
 
-    fn response(&self, name: &Ident) -> Ident {
-        if let Some(response) = &self.response {
-            Ident::new(response, name.span())
-        } else {
-            Ident::new(&format!("{}Response", name), name.span())
-        }
+    fn response(&self, name: &Ident) -> Type {
+        self.response
+            .clone()
+            .unwrap_or_else(|| parse_str(&format!("{name}Response")).unwrap())
     }
 
-    fn error(&self, name: &Ident) -> Ident {
-        if let Some(error) = &self.error {
-            Ident::new(error, name.span())
-        } else {
-            Ident::new(&format!("{}Error", name), name.span())
-        }
+    fn error(&self, name: &Ident) -> Type {
+        self.error
+            .clone()
+            .unwrap_or_else(|| syn::parse_str(&format!("{name}Error")).unwrap())
     }
 
     fn jsonrpc(&self) -> &Path {
