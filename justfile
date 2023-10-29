@@ -16,3 +16,5 @@ deprecated:
 fresh: clean update clippy test build
 deps:
     cargo update && git commit -m "Update deps" Cargo.lock
+expand:
+    cargo expand -Z macro-backtrace

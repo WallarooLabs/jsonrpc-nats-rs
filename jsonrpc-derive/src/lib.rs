@@ -130,6 +130,20 @@ fn derive_client(ast: &DeriveInput, attrs: &JsonRpcAttrs) -> proc_macro2::TokenS
     let response = attrs.response(name);
     let error = attrs.error(name);
 
+    let request = match request {
+        Type::Tuple(tuple) if tuple.elems.is_empty() => None,
+        other => Some(other),
+    };
+
+    let method_params = request
+        .map(|request| quote::quote!(request: impl ::core::convert::Into<Option<#request>>,));
+
+    let call_params = if method_params.is_some() {
+        quote::quote!(request)
+    } else {
+        quote::quote!(None)
+    };
+
     quote::quote!(
         #[#jsonrpc::async_trait(?Send)]
         pub trait #clientext<T>
@@ -139,7 +153,7 @@ fn derive_client(ast: &DeriveInput, attrs: &JsonRpcAttrs) -> proc_macro2::TokenS
         {
             async fn #method(
                 &self,
-                request: impl ::core::convert::Into<#request>,
+                #method_params
             ) -> ::core::result::Result<::core::result::Result<#response, #error>, T::Error>;
         }
 
@@ -151,9 +165,9 @@ fn derive_client(ast: &DeriveInput, attrs: &JsonRpcAttrs) -> proc_macro2::TokenS
         {
             async fn #method(
                 &self,
-                request: impl ::core::convert::Into<#request>,
+                #method_params
             ) -> ::core::result::Result<::core::result::Result<#response, #error>, T::Error> {
-                self.call::<#name>(request.into()).await
+                self.call::<#name>(#call_params).await
             }
         }
 

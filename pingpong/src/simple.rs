@@ -5,14 +5,14 @@ use jsonrpc::JsonRpc2Service;
 #[derive(Debug, Default, JsonRpc2)]
 #[jsonrpc(
     method = "simple",
-    // request = "CountRequest",
+    request = "()",
     response = "String",
-    // error = "CountError",
+    // error = "SimpleError",
     client
 )]
 pub(crate) struct Simple;
 
-pub(crate) type SimpleRequest = ();
+// pub(crate) type SimpleRequest = ();
 
 pub(crate) type SimpleError = ();
 

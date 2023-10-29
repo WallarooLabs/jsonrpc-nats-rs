@@ -33,13 +33,13 @@ where
     ///
     pub async fn call<R>(
         &self,
-        request: R::Request,
+        request: impl Into<Option<R::Request>>,
     ) -> Result<Result<R::Response, R::Error>, T::Error>
     where
         R: JsonRpc2,
     {
         let id = self.id().into();
-        let request = Request::from_request::<R>(id, Some(request))?;
+        let request = Request::from_request::<R>(id, request.into())?;
         let response = self.transport.call(request).await?;
         let response = response
             .into_typed_result::<R>()?

@@ -23,7 +23,7 @@ pub(super) async fn client(addrs: String, method: Method) -> anyhow::Result<()> 
             tracing::info!(?response);
         }
         Method::Simple => {
-            let response = client.simple(()).await?;
+            let response = client.simple().await?;
             tracing::info!(?response);
         }
     }
