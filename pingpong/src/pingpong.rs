@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 
 mod impls;
 
-#[derive(Debug, JsonRpc2)]
+#[derive(Debug, Default, JsonRpc2)]
 #[jsonrpc(method = "pingpong", error = "String", client)]
 pub(crate) struct PingPong;
 
