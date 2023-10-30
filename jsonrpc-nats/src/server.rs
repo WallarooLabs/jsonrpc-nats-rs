@@ -59,12 +59,29 @@ impl Server {
             >,
     {
         while let Some(request) = endpoint.next().await {
-            let response = handle_one_request::<R>(&ctx, &request.message.payload)
-                .await
-                .map_err(nats_service_error);
-            if let Err(error) = request.respond(response).await {
+            if let Err(error) = handle_nats_request(&ctx, request).await {
                 tracing::error!(%error, "Failed to send response");
             }
+        }
+    }
+
+    pub async fn serve_one<R>(endpoint: &mut Endpoint, ctx: &R) -> Option<()>
+    where
+        R: JsonRpc2
+            + JsonRpc2Service<
+                <R as JsonRpc2>::Request,
+                Response = <R as JsonRpc2>::Response,
+                Error = <R as JsonRpc2>::Error,
+            >,
+    {
+        match endpoint.next().await {
+            Some(request) => {
+                if let Err(error) = handle_nats_request(ctx, request).await {
+                    tracing::error!(%error, "Failed to send response");
+                }
+                Some(())
+            }
+            None => None,
         }
     }
 
@@ -83,7 +100,25 @@ impl Server {
     }
 }
 
-async fn handle_one_request<R>(ctx: &R, request: &[u8]) -> json::Result<Bytes>
+async fn handle_nats_request<R>(
+    ctx: &R,
+    request: nats::service::Request,
+) -> Result<(), nats::PublishError>
+where
+    R: JsonRpc2
+        + JsonRpc2Service<
+            <R as JsonRpc2>::Request,
+            Response = <R as JsonRpc2>::Response,
+            Error = <R as JsonRpc2>::Error,
+        >,
+{
+    let response = handle_jsonrpc_call::<R>(ctx, &request.message.payload)
+        .await
+        .map_err(nats_service_error);
+    request.respond(response).await
+}
+
+async fn handle_jsonrpc_call<R>(ctx: &R, request: &[u8]) -> json::Result<Bytes>
 where
     R: JsonRpc2
         + JsonRpc2Service<
