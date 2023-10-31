@@ -25,15 +25,15 @@ mod request;
 mod response;
 
 /// Define a single JSONRPC function
-pub trait JsonRpc2 {
+pub trait JsonRpc2: Send + Sync {
     /// JSONRPC method name
     const METHOD: &'static str;
     /// Shape of the request
-    type Request: fmt::Debug + Serialize + de::DeserializeOwned;
+    type Request: fmt::Debug + Serialize + de::DeserializeOwned + Send + Sync;
     /// Shape of the response
-    type Response: fmt::Debug + Serialize + de::DeserializeOwned;
+    type Response: fmt::Debug + Serialize + de::DeserializeOwned + Send + Sync;
     /// Shape of the error
-    type Error: fmt::Debug + Serialize + de::DeserializeOwned;
+    type Error: fmt::Debug + Serialize + de::DeserializeOwned + Send + Sync;
 }
 
 #[derive(Debug, Serialize, Deserialize)]

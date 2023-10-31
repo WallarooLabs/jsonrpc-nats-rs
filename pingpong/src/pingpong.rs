@@ -31,7 +31,7 @@ pub(crate) struct PingPongResponse {
 //     type Error = String;
 // }
 
-#[jsonrpc::async_trait(?Send)]
+#[jsonrpc::async_trait]
 impl JsonRpc2Service<<Self as JsonRpc2>::Request> for PingPong {
     type Response = <Self as JsonRpc2>::Response;
     type Error = <Self as JsonRpc2>::Error;

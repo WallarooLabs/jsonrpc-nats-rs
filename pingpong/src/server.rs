@@ -2,7 +2,32 @@ use jsonrpc_nats::Server;
 
 use super::*;
 
-pub(super) async fn server(addrs: String) -> anyhow::Result<()> {
+pub(crate) async fn server(addrs: String) -> anyhow::Result<()> {
+    let pp = pingpong::PingPong;
+    let c = count::Count::default();
+    let s = simple::Simple;
+
+    Nats::new(addrs)
+        .await?
+        .server()
+        .await
+        .map_err(|e| anyhow::anyhow!(e))?
+        .method(pp)
+        .await
+        .map_err(|e| anyhow::anyhow!(e))?
+        .method(c)
+        .await
+        .map_err(|e| anyhow::anyhow!(e))?
+        .method(s)
+        .await
+        .map_err(|e| anyhow::anyhow!(e))?
+        .run()
+        .await;
+
+    Ok(())
+}
+
+pub(super) async fn _server(addrs: String) -> anyhow::Result<()> {
     let server = Nats::new(addrs)
         .await?
         .server()
@@ -11,34 +36,7 @@ pub(super) async fn server(addrs: String) -> anyhow::Result<()> {
 
     tracing::info!(?server, "Starting");
 
-    multiple(&server).await
-}
-
-async fn multiple(server: &Server) -> anyhow::Result<()> {
-    let pp = pingpong::PingPong;
-    let c = count::Count::default();
-    let s = simple::Simple;
-
-    let mut ep1 = server
-        .add_method::<pingpong::PingPong>()
-        .await
-        .map_err(|e| anyhow::anyhow!(e))?;
-    let mut ep2 = server
-        .add_method::<count::Count>()
-        .await
-        .map_err(|e| anyhow::anyhow!(e))?;
-    let mut ep3 = server
-        .add_method::<simple::Simple>()
-        .await
-        .map_err(|e| anyhow::anyhow!(e))?;
-
-    loop {
-        tokio::select! {
-            Some(_) = Server::serve_one(&mut ep1, &pp) => {},
-            Some(_) = Server::serve_one(&mut ep2, &c) => {},
-            Some(_) = Server::serve_one(&mut ep3, &s) => {},
-        }
-    }
+    _single(&server).await
 }
 
 async fn _single(server: &Server) -> anyhow::Result<()> {

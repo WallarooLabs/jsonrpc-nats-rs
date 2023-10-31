@@ -8,10 +8,15 @@ use nats::service::ServiceExt;
 
 use super::*;
 
+use self::handle::Endpoints;
+
+mod handle;
+
 #[derive(Debug)]
 pub struct Server {
     client: nats::Client,
     service: Service,
+    endpoints: Endpoints,
 }
 
 impl Server {
@@ -36,13 +41,31 @@ impl Server {
     }
 
     pub async fn with_config(client: nats::Client, config: Config) -> Result<Self, nats::Error> {
-        client
-            .add_service(config)
-            .await
-            .map(|service| Self { client, service })
+        let endpoints = Endpoints::default();
+        client.add_service(config).await.map(|service| Self {
+            client,
+            service,
+            endpoints,
+        })
     }
 
-    pub async fn add_method<R>(&self) -> Result<Endpoint, nats::Error>
+    pub async fn method<R>(self, ctx: R) -> Result<Self, nats::Error>
+    where
+        R: Send
+            + Sync
+            + JsonRpc2
+            + JsonRpc2Service<
+                <R as JsonRpc2>::Request,
+                Response = <R as JsonRpc2>::Response,
+                Error = <R as JsonRpc2>::Error,
+            > + 'static,
+    {
+        let endpoint = self.create_endpoint::<R>().await?;
+        let endpoints = self.endpoints.endpoint(ctx, endpoint);
+        Ok(Self { endpoints, ..self })
+    }
+
+    pub async fn create_endpoint<R>(&self) -> Result<Endpoint, nats::Error>
     where
         R: JsonRpc2,
     {
@@ -65,24 +88,8 @@ impl Server {
         }
     }
 
-    pub async fn serve_one<R>(endpoint: &mut Endpoint, ctx: &R) -> Option<()>
-    where
-        R: JsonRpc2
-            + JsonRpc2Service<
-                <R as JsonRpc2>::Request,
-                Response = <R as JsonRpc2>::Response,
-                Error = <R as JsonRpc2>::Error,
-            >,
-    {
-        match endpoint.next().await {
-            Some(request) => {
-                if let Err(error) = handle_nats_request(ctx, request).await {
-                    tracing::error!(%error, "Failed to send response");
-                }
-                Some(())
-            }
-            None => None,
-        }
+    pub async fn run(self) {
+        self.endpoints.run().await
     }
 
     pub async fn start_single_rpc_method<R>(&self, ctx: R) -> Result<(), nats::Error>
@@ -94,7 +101,7 @@ impl Server {
                 Error = <R as JsonRpc2>::Error,
             >,
     {
-        let endpoint = self.add_method::<R>().await?;
+        let endpoint = self.create_endpoint::<R>().await?;
         self.start_endpoint(endpoint, ctx).await;
         Ok(())
     }

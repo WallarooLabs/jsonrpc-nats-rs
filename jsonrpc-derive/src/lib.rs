@@ -135,8 +135,9 @@ fn derive_client(ast: &DeriveInput, attrs: &JsonRpcAttrs) -> proc_macro2::TokenS
         other => Some(other),
     };
 
-    let method_params = request
-        .map(|request| quote::quote!(request: impl ::core::convert::Into<Option<#request>>,));
+    let method_params = request.map(
+        |request| quote::quote!(request: impl ::core::convert::Into<::core::option::Option<#request>> + ::core::marker::Send,),
+    );
 
     let call_params = if method_params.is_some() {
         quote::quote!(request)
@@ -145,7 +146,7 @@ fn derive_client(ast: &DeriveInput, attrs: &JsonRpcAttrs) -> proc_macro2::TokenS
     };
 
     quote::quote!(
-        #[#jsonrpc::async_trait(?Send)]
+        #[#jsonrpc::async_trait]
         pub trait #clientext<T>
         where
             T: #jsonrpc::JsonRpc2Service<#jsonrpc::Request, Response = #jsonrpc::Response>,
@@ -157,7 +158,7 @@ fn derive_client(ast: &DeriveInput, attrs: &JsonRpcAttrs) -> proc_macro2::TokenS
             ) -> ::core::result::Result<::core::result::Result<#response, #error>, T::Error>;
         }
 
-        #[#jsonrpc::async_trait(?Send)]
+        #[#jsonrpc::async_trait]
         impl<T> #clientext<T> for #jsonrpc::AsyncClient<T>
         where
             T: #jsonrpc::JsonRpc2Service<#jsonrpc::Request, Response = #jsonrpc::Response>,

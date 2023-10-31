@@ -19,7 +19,7 @@ impl Client {
     }
 }
 
-#[async_trait(?Send)]
+#[async_trait]
 impl JsonRpc2Service<jsonrpc::Request> for Client {
     type Response = jsonrpc::Response;
     type Error = Error;
@@ -40,4 +40,18 @@ pub enum Error {
     TransportError(#[from] nats::RequestError),
     #[error("JSON error")]
     JsonError(#[from] json::Error),
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn send<T: Send>() {}
+    fn sync<T: Sync>() {}
+
+    #[test]
+    fn error_send_sync() {
+        send::<Error>();
+        sync::<Error>();
+    }
 }

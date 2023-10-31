@@ -1,6 +1,6 @@
 use super::*;
 
-#[jsonrpc::async_trait(?Send)]
+#[jsonrpc::async_trait]
 pub(crate) trait PingPongExt<T>
 where
     T: jsonrpc::JsonRpc2Service<jsonrpc::Request, Response = jsonrpc::Response>,
@@ -13,7 +13,7 @@ where
     ) -> Result<Result<PingPongResponse, String>, T::Error>;
 }
 
-#[jsonrpc::async_trait(?Send)]
+#[jsonrpc::async_trait]
 impl<T> PingPongExt<T> for jsonrpc::AsyncClient<T>
 where
     T: jsonrpc::JsonRpc2Service<jsonrpc::Request, Response = jsonrpc::Response>,

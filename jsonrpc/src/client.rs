@@ -17,7 +17,7 @@ impl<T> AsyncClient<T> {
 impl<T> AsyncClient<T>
 where
     T: service::JsonRpc2Service<Request, Response = Response>,
-    T::Error: From<json::Error>,
+    T::Error: From<json::Error> + Send + Sync,
 {
     /// Create new `AsyncClient` instance with a given `transport`.
     ///
@@ -33,7 +33,7 @@ where
     ///
     pub async fn call<R>(
         &self,
-        request: impl Into<Option<R::Request>>,
+        request: impl Into<Option<R::Request>> + Send,
     ) -> Result<Result<R::Response, R::Error>, T::Error>
     where
         R: JsonRpc2,

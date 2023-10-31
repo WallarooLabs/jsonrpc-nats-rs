@@ -23,7 +23,7 @@ pub(crate) type SimpleError = ();
 //     type Error = SimpleError;
 // }
 
-#[jsonrpc::async_trait(?Send)]
+#[jsonrpc::async_trait]
 impl JsonRpc2Service<<Self as JsonRpc2>::Request> for Simple {
     type Response = <Self as JsonRpc2>::Response;
     type Error = <Self as JsonRpc2>::Error;
