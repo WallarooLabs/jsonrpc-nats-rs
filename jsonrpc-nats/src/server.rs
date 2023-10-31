@@ -127,9 +127,7 @@ where
             Error = <R as JsonRpc2>::Error,
         >,
 {
-    let jsonrpc::Request { params, id, .. } = json::from_slice(request)?;
-    let request = params.unwrap_or_default();
-    let request = json::from_value::<<R as JsonRpc2>::Request>(request)?;
+    let (id, request) = json::from_slice::<jsonrpc::Request>(request)?.into_request::<R>()?;
 
     tracing::trace!(?request);
     let result = ctx.call(request).await;

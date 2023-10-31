@@ -42,10 +42,12 @@ impl Request {
         })
     }
 
-    pub fn into_request<R>(self) -> json::Result<Option<R::Request>>
+    pub fn into_request<R>(self) -> json::Result<(json::Value, R::Request)>
     where
         R: JsonRpc2,
     {
-        self.params.map(json::from_value).transpose()
+        let Self { id, params, .. } = self;
+        let value = params.unwrap_or_default();
+        json::from_value(value).map(|request| (id, request))
     }
 }
