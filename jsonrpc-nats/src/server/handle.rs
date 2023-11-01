@@ -3,7 +3,6 @@ use std::fmt;
 use std::sync::Arc;
 
 use futures::future;
-// use futures::Future;
 use futures::FutureExt;
 
 use super::*;
@@ -37,16 +36,22 @@ impl Endpoints {
     }
 
     pub(crate) async fn run(self) {
-        let all_handlers = self.endpoints.into_iter().map(|(method, handler)| {
-            tracing::info!(method, "spawning handler for");
-            tokio::spawn(handler).map(move |join| (method, join))
-        });
-        future::join_all(all_handlers)
-            .await
+        let mut handlers = tokio::task::JoinSet::new();
+
+        let _aborts = self
+            .endpoints
             .into_iter()
-            .for_each(|(method, join)| {
-                join.unwrap_or_else(|err| tracing::error!(method, %err, "Join failed"))
+            .map(|(method, handler)| {
+                tracing::info!(method, "spawning handler for");
+                handlers.spawn(handler)
             })
+            .collect::<Vec<_>>();
+
+        while let Some(done) = handlers.join_next().await {
+            if let Err(err) = done {
+                tracing::error!(%err, "join failed");
+            }
+        }
     }
 }
 
