@@ -5,7 +5,7 @@ resolver = "2"
 
 [workspace.dependencies]
 anyhow = "1.0"
-async-nats = { version = "0.32", features = ["experimental"] }
+async-nats = { version = "0.33", features = ["experimental"] }
 async-trait = "0.1"
 bytes = "1.5"
 darling = "0.20"
