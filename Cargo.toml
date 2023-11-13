@@ -3,10 +3,13 @@ members = ["jsonrpc", "jsonrpc-nats", "jsonrpc-derive", "pingpong"]
 resolver = "2"
 
 
+[workspace.package]
+rust-version = "1.75.0"
+
+
 [workspace.dependencies]
 anyhow = "1.0"
 async-nats = { version = "0.33", features = ["experimental"] }
-async-trait = "0.1"
 bytes = "1.5"
 darling = "0.20"
 futures = "0.3"
@@ -18,7 +21,6 @@ tap = "1.0"
 thiserror = "1.0"
 tokio = { version = "1.32", features = ["full"] }
 tracing = "0.1"
-
 
 jsonrpc = { path = "./jsonrpc" }
 jsonrpc-nats = { path = "./jsonrpc-nats" }

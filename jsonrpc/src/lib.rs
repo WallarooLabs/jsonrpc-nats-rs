@@ -7,7 +7,6 @@ use serde_json as json;
 use tap::TapFallible;
 use thiserror::Error;
 
-pub use async_trait::async_trait;
 pub use jsonrpc_derive::JsonRpc2;
 
 pub use self::client::AsyncClient;

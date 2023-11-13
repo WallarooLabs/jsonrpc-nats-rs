@@ -19,7 +19,6 @@ pub trait JsonRpc2 {
     type Error: fmt::Debug + Serialize + de::DeserializeOwned;
 }
 
-#[async_trait]
 pub trait JsonRpc2Service<Request> {
     type Response;
     type Error;

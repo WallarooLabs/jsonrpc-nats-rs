@@ -144,19 +144,17 @@ fn derive_client(ast: &syn::DeriveInput, attrs: &JsonRpcAttrs) -> proc_macro2::T
     };
 
     quote::quote!(
-        #[#jsonrpc::async_trait]
         pub trait #clientext<T>
         where
             T: #jsonrpc::JsonRpc2Service<#jsonrpc::Request, Response = #jsonrpc::Response>,
             T::Error: ::core::convert::From<#serde_json::Error>,
         {
-            async fn #method(
+            fn #method(
                 &self,
                 #method_params
-            ) -> ::core::result::Result<::core::result::Result<#response, #error>, T::Error>;
+            ) -> impl ::core::future::Future<Output = ::core::result::Result<::core::result::Result<#response, #error>, T::Error>> + ::core::marker::Send;
         }
 
-        #[#jsonrpc::async_trait]
         impl<T> #clientext<T> for #jsonrpc::AsyncClient<T>
         where
             T: #jsonrpc::JsonRpc2Service<#jsonrpc::Request, Response = #jsonrpc::Response>,

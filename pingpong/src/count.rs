@@ -33,7 +33,6 @@ pub(crate) type CountError = ();
 //     type Error = CountError;
 // }
 
-#[jsonrpc::async_trait]
 impl JsonRpc2Service<<Self as JsonRpc2>::Request> for Count {
     type Response = <Self as JsonRpc2>::Response;
     type Error = <Self as JsonRpc2>::Error;

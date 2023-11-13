@@ -19,7 +19,6 @@ impl Client {
     }
 }
 
-#[async_trait]
 impl JsonRpc2Service<jsonrpc::Request> for Client {
     type Response = jsonrpc::Response;
     type Error = Error;

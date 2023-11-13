@@ -1,6 +1,5 @@
 use async_nats as nats;
 use bytes::Bytes;
-use jsonrpc::async_trait;
 use jsonrpc::AsyncClient;
 use jsonrpc::JsonRpc2;
 use jsonrpc::JsonRpc2Service;
