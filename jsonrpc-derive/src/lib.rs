@@ -1,11 +1,6 @@
+use darling::export::syn;
 use darling::FromDeriveInput;
 use darling::FromMeta;
-use syn::parse_quote;
-use syn::parse_str;
-use syn::DeriveInput;
-use syn::Ident;
-use syn::Path;
-use syn::Type;
 
 #[proc_macro_derive(JsonRpc2, attributes(jsonrpc))]
 pub fn derive(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
@@ -16,9 +11,9 @@ pub fn derive(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
 #[darling(attributes(jsonrpc))]
 struct JsonRpcAttrs {
     method: String,
-    request: Option<Type>,
-    response: Option<Type>,
-    error: Option<Type>,
+    request: Option<syn::Type>,
+    response: Option<syn::Type>,
+    error: Option<syn::Type>,
     #[darling(default)]
     crates: Crates,
     #[darling(default)]
@@ -28,9 +23,9 @@ struct JsonRpcAttrs {
 #[derive(Debug, FromMeta)]
 struct Crates {
     #[darling(default = "Self::default_jsonrpc")]
-    jsonrpc: Path,
+    jsonrpc: syn::Path,
     #[darling(default = "Self::default_serde_json")]
-    serde_json: Path,
+    serde_json: syn::Path,
 }
 
 impl JsonRpcAttrs {
@@ -38,25 +33,25 @@ impl JsonRpcAttrs {
         &self.method
     }
 
-    fn request(&self, name: &Ident) -> Type {
+    fn request(&self, name: &syn::Ident) -> syn::Type {
         self.request
             .clone()
-            .unwrap_or_else(|| parse_str(&format!("{name}Request")).unwrap())
+            .unwrap_or_else(|| syn::parse_str(&format!("{name}Request")).unwrap())
     }
 
-    fn response(&self, name: &Ident) -> Type {
+    fn response(&self, name: &syn::Ident) -> syn::Type {
         self.response
             .clone()
-            .unwrap_or_else(|| parse_str(&format!("{name}Response")).unwrap())
+            .unwrap_or_else(|| syn::parse_str(&format!("{name}Response")).unwrap())
     }
 
-    fn error(&self, name: &Ident) -> Type {
+    fn error(&self, name: &syn::Ident) -> syn::Type {
         self.error
             .clone()
             .unwrap_or_else(|| syn::parse_str(&format!("{name}Error")).unwrap())
     }
 
-    fn jsonrpc(&self) -> &Path {
+    fn jsonrpc(&self) -> &syn::Path {
         &self.crates.jsonrpc
     }
 }
@@ -71,17 +66,17 @@ impl Default for Crates {
 }
 
 impl Crates {
-    fn default_jsonrpc() -> Path {
-        parse_quote!(::jsonrpc)
+    fn default_jsonrpc() -> syn::Path {
+        syn::parse_quote!(::jsonrpc)
     }
 
-    fn default_serde_json() -> Path {
-        parse_quote!(::serde_json)
+    fn default_serde_json() -> syn::Path {
+        syn::parse_quote!(::serde_json)
     }
 }
 
 fn derive2(input: proc_macro2::TokenStream) -> proc_macro2::TokenStream {
-    let ast: DeriveInput = match syn::parse2(input) {
+    let ast: syn::DeriveInput = match syn::parse2(input) {
         Ok(ast) => ast,
         Err(err) => return err.to_compile_error(),
     };
@@ -100,7 +95,7 @@ fn derive2(input: proc_macro2::TokenStream) -> proc_macro2::TokenStream {
     )
 }
 
-fn derive_jsonrpc2(ast: &DeriveInput, attrs: &JsonRpcAttrs) -> proc_macro2::TokenStream {
+fn derive_jsonrpc2(ast: &syn::DeriveInput, attrs: &JsonRpcAttrs) -> proc_macro2::TokenStream {
     let name = &ast.ident;
     let jsonrpc = attrs.jsonrpc();
     let method = attrs.method();
@@ -119,19 +114,19 @@ fn derive_jsonrpc2(ast: &DeriveInput, attrs: &JsonRpcAttrs) -> proc_macro2::Toke
     )
 }
 
-fn derive_client(ast: &DeriveInput, attrs: &JsonRpcAttrs) -> proc_macro2::TokenStream {
+fn derive_client(ast: &syn::DeriveInput, attrs: &JsonRpcAttrs) -> proc_macro2::TokenStream {
     let name = &ast.ident;
     let jsonrpc = attrs.jsonrpc();
-    let clientext = Ident::new(&format!("{}Ext", name), name.span());
+    let clientext = syn::Ident::new(&format!("{}Ext", name), name.span());
     let serde_json = &attrs.crates.serde_json;
 
-    let method = Ident::new(attrs.method(), name.span());
+    let method = syn::Ident::new(attrs.method(), name.span());
     let request = attrs.request(name);
     let response = attrs.response(name);
     let error = attrs.error(name);
 
     let request = match request {
-        Type::Tuple(tuple) if tuple.elems.is_empty() => None,
+        syn::Type::Tuple(tuple) if tuple.elems.is_empty() => None,
         other => Some(other),
     };
 
