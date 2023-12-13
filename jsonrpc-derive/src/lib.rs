@@ -1,4 +1,5 @@
 use darling::export::syn;
+use darling::util::Flag;
 use darling::FromDeriveInput;
 use darling::FromMeta;
 
@@ -16,8 +17,7 @@ struct JsonRpcAttrs {
     error: Option<syn::Type>,
     #[darling(default)]
     crates: Crates,
-    #[darling(default)]
-    client: bool,
+    client: Flag,
 }
 
 #[derive(Debug, FromMeta)]
@@ -87,7 +87,10 @@ fn derive2(input: proc_macro2::TokenStream) -> proc_macro2::TokenStream {
     };
 
     let jsonrpc2 = derive_jsonrpc2(&ast, &attrs);
-    let client = attrs.client.then(|| derive_client(&ast, &attrs));
+    let client = attrs
+        .client
+        .is_present()
+        .then(|| derive_client(&ast, &attrs));
 
     quote::quote!(
         #jsonrpc2
