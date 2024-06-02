@@ -1,20 +1,20 @@
-use std::collections::BTreeMap;
+use std::collections::HashMap;
 use std::fmt;
-use std::mem;
 use std::sync::Arc;
 
 use futures::future;
 use futures::FutureExt;
+use tokio::sync::Mutex;
 
 use super::*;
 
 #[derive(Default)]
 pub(crate) struct Endpoints {
-    endpoints: BTreeMap<&'static str, future::BoxFuture<'static, ()>>,
+    endpoints: Mutex<HashMap<&'static str, future::BoxFuture<'static, ()>>>,
 }
 
 impl Endpoints {
-    pub(crate) fn endpoint<R>(mut self, ctx: R, endpoint: Endpoint) -> Self
+    pub(crate) async fn endpoint<R>(self, ctx: R, endpoint: Endpoint) -> Self
     where
         R: Send
             + Sync
@@ -32,16 +32,18 @@ impl Endpoints {
                 handle_request(ctx, request)
             })
             .boxed();
-        self.endpoints.insert(R::METHOD, ep);
+        self.endpoints.lock().await.insert(R::METHOD, ep);
         self
     }
 
-    pub(crate) fn spawn_on(
-        &mut self,
+    pub(crate) async fn spawn_on(
+        &self,
         tasks: &mut tokio::task::JoinSet<anyhow::Result<()>>,
     ) -> Vec<tokio::task::AbortHandle> {
-        mem::take(&mut self.endpoints)
-            .into_iter()
+        self.endpoints
+            .lock()
+            .await
+            .drain()
             .map(|(method, handler)| {
                 tracing::info!(method, "spawning handler for");
                 let task = async {

@@ -61,7 +61,7 @@ impl Server {
             > + 'static,
     {
         let endpoint = self.create_endpoint::<R>().await?;
-        let endpoints = self.endpoints.endpoint(ctx, endpoint);
+        let endpoints = self.endpoints.endpoint(ctx, endpoint).await;
         Ok(Self { endpoints, ..self })
     }
 
@@ -88,9 +88,9 @@ impl Server {
         }
     }
 
-    pub async fn run(mut self) {
+    pub async fn run(self) {
         let mut tasks = tokio::task::JoinSet::<anyhow::Result<()>>::new();
-        let _aborts: Vec<tokio::task::AbortHandle> = self.spawn_on(&mut tasks);
+        let _aborts: Vec<tokio::task::AbortHandle> = self.spawn_on(&mut tasks).await;
         while let Some(done) = tasks.join_next().await {
             if let Err(err) = done {
                 tracing::error!(%err, "join failed");
@@ -98,11 +98,11 @@ impl Server {
         }
     }
 
-    pub fn spawn_on(
-        &mut self,
+    pub async fn spawn_on(
+        &self,
         tasks: &mut tokio::task::JoinSet<anyhow::Result<()>>,
     ) -> Vec<tokio::task::AbortHandle> {
-        self.endpoints.spawn_on(tasks)
+        self.endpoints.spawn_on(tasks).await
     }
 
     pub async fn start_single_rpc_method<R>(&self, ctx: R) -> Result<(), nats::Error>
@@ -161,5 +161,23 @@ fn nats_service_error(error: json::Error) -> Error {
     Error {
         status: error.to_string(),
         code: usize::MAX,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn assert_send<T: Send>() {}
+    fn assert_sync<T: Sync>() {}
+
+    #[test]
+    fn server_is_send() {
+        assert_send::<Server>();
+    }
+
+    #[test]
+    fn server_is_sync() {
+        assert_sync::<Server>();
     }
 }
