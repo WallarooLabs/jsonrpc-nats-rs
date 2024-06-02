@@ -4,9 +4,6 @@ The implementation is modeled on `tower::Service`, but does not use it directly.
 The reason is that `tower::Service` is not `async` and hence is less ergonomic
 than it could be otherwise.
 
-This implementation uses `async-trait` and it will be easy to convert it
-to native AFIT (async function in trait) when that hits stable.
-
 NOTE: There is `tower-async`, but it requires nightly compiler.
 
 ## (VHLD) Very High Level Description
