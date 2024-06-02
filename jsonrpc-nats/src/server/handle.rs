@@ -36,6 +36,27 @@ impl Endpoints {
         self
     }
 
+    pub(crate) async fn add_endpoint<R>(&self, ctx: R, endpoint: Endpoint)
+    where
+        R: Send
+            + Sync
+            + JsonRpc2
+            + JsonRpc2Service<
+                <R as JsonRpc2>::Request,
+                Response = <R as JsonRpc2>::Response,
+                Error = <R as JsonRpc2>::Error,
+            > + 'static,
+    {
+        let ctx = Arc::new(ctx);
+        let ep = endpoint
+            .for_each(move |request| {
+                let ctx = ctx.clone();
+                handle_request(ctx, request)
+            })
+            .boxed();
+        self.endpoints.lock().await.insert(R::METHOD, ep);
+    }
+
     pub(crate) async fn spawn_on(
         &self,
         tasks: &mut tokio::task::JoinSet<anyhow::Result<()>>,

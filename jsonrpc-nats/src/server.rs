@@ -65,6 +65,22 @@ impl Server {
         Ok(Self { endpoints, ..self })
     }
 
+    pub async fn add_method<R>(&self, ctx: R) -> Result<&Self, nats::Error>
+    where
+        R: Send
+            + Sync
+            + JsonRpc2
+            + JsonRpc2Service<
+                <R as JsonRpc2>::Request,
+                Response = <R as JsonRpc2>::Response,
+                Error = <R as JsonRpc2>::Error,
+            > + 'static,
+    {
+        let endpoint = self.create_endpoint::<R>().await?;
+        self.endpoints.add_endpoint(ctx, endpoint).await;
+        Ok(self)
+    }
+
     pub async fn create_endpoint<R>(&self) -> Result<Endpoint, nats::Error>
     where
         R: JsonRpc2,
