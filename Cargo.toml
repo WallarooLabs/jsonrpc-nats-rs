@@ -9,7 +9,7 @@ rust-version = "1.75.0"
 
 [workspace.dependencies]
 anyhow = "1.0"
-async-nats = { version = "0.33", features = ["experimental"] }
+async-nats = { version = "0.35", features = ["experimental"] }
 bytes = "1.5"
 darling = "0.20"
 futures = "0.3"
