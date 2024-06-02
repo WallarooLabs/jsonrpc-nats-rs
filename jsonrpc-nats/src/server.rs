@@ -88,8 +88,21 @@ impl Server {
         }
     }
 
-    pub async fn run(self) {
-        self.endpoints.run().await
+    pub async fn run(mut self) {
+        let mut tasks = tokio::task::JoinSet::<anyhow::Result<()>>::new();
+        let _aborts: Vec<tokio::task::AbortHandle> = self.spawn_on(&mut tasks);
+        while let Some(done) = tasks.join_next().await {
+            if let Err(err) = done {
+                tracing::error!(%err, "join failed");
+            }
+        }
+    }
+
+    pub fn spawn_on(
+        &mut self,
+        tasks: &mut tokio::task::JoinSet<anyhow::Result<()>>,
+    ) -> Vec<tokio::task::AbortHandle> {
+        self.endpoints.spawn_on(tasks)
     }
 
     pub async fn start_single_rpc_method<R>(&self, ctx: R) -> Result<(), nats::Error>

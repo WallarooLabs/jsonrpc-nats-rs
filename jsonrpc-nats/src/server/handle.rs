@@ -1,5 +1,6 @@
 use std::collections::BTreeMap;
 use std::fmt;
+use std::mem;
 use std::sync::Arc;
 
 use futures::future;
@@ -35,23 +36,21 @@ impl Endpoints {
         self
     }
 
-    pub(crate) async fn run(self) {
-        let mut handlers = tokio::task::JoinSet::new();
-
-        let _aborts = self
-            .endpoints
+    pub(crate) fn spawn_on(
+        &mut self,
+        tasks: &mut tokio::task::JoinSet<anyhow::Result<()>>,
+    ) -> Vec<tokio::task::AbortHandle> {
+        mem::take(&mut self.endpoints)
             .into_iter()
             .map(|(method, handler)| {
                 tracing::info!(method, "spawning handler for");
-                handlers.spawn(handler)
+                let task = async {
+                    handler.await;
+                    Ok(())
+                };
+                tasks.spawn(task)
             })
-            .collect::<Vec<_>>();
-
-        while let Some(done) = handlers.join_next().await {
-            if let Err(err) = done {
-                tracing::error!(%err, "join failed");
-            }
-        }
+            .collect::<Vec<_>>()
     }
 }
 
