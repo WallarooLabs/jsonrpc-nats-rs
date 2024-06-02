@@ -51,3 +51,9 @@ impl Nats {
         Server::new(self.client).await
     }
 }
+
+impl From<nats::Client> for Nats {
+    fn from(client: nats::Client) -> Self {
+        Self { client }
+    }
+}
