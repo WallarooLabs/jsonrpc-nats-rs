@@ -10,10 +10,9 @@ pub struct Request {
 }
 
 impl Request {
-    pub fn new(method: &'static str, params: Option<json::Value>, id: u64) -> Self {
+    pub fn new(method: &'static str, params: Option<json::Value>, id: json::Value) -> Self {
         let jsonrpc = JsonRpc2Version::JsonRpc2;
         let method = Cow::from(method);
-        let id = json::Value::from(id);
 
         Self {
             jsonrpc,
@@ -30,16 +29,10 @@ impl Request {
     where
         R: JsonRpc2,
     {
-        let jsonrpc = JsonRpc2Version::JsonRpc2;
-        let method = R::METHOD.into();
-        let params = request.map(json::to_value).transpose()?;
-
-        Ok(Self {
-            jsonrpc,
-            method,
-            params,
-            id,
-        })
+        request
+            .map(json::to_value)
+            .transpose()
+            .map(|params| Self::new(R::METHOD, params, id))
     }
 
     pub fn into_request<R>(self) -> json::Result<(json::Value, R::Request)>
