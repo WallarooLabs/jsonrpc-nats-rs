@@ -4,7 +4,6 @@ use std::sync::atomic::{AtomicU64, Ordering};
 
 use serde::{de, Deserialize, Serialize};
 use serde_json as json;
-use tap::TapFallible;
 use thiserror::Error;
 
 pub use jsonrpc_derive::JsonRpc2;

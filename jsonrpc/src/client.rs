@@ -43,8 +43,8 @@ where
         let response = self.transport.call(request).await?;
         let response = response
             .into_typed_result::<R>()?
-            .tap_ok(|response| tracing::trace!(?response))
-            .tap_err(|error| tracing::trace!(?error));
+            .inspect(|response| tracing::trace!(?response))
+            .inspect_err(|error| tracing::trace!(?error));
 
         Ok(response)
     }
