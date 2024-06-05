@@ -41,6 +41,14 @@ impl ErrorObject {
         }
     }
 
+    pub fn method_not_found(method: &str) -> Self {
+        Self {
+            code: Self::METHOD_NOT_FOUND,
+            message: format!("Method '{method}' not found"),
+            data: None,
+        }
+    }
+
     pub fn is_parse_error(&self) -> bool {
         matches!(self.code, Self::PARSE_ERROR)
     }

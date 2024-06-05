@@ -6,7 +6,7 @@ pub struct Client {
 }
 
 impl Client {
-    pub fn new(client: nats::Client) -> Self {
+    pub(crate) fn new(client: nats::Client) -> Self {
         let inner = client.clone();
         Self { inner }
     }

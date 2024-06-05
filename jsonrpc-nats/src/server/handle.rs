@@ -94,7 +94,11 @@ where
             Error = <R as JsonRpc2>::Error,
         >,
 {
-    handle_nats_request(ctx.as_ref(), request)
+    let response = handle_nats_request(ctx.as_ref(), &request.message.payload)
+        .await
+        .map_err(nats_service_error);
+    request
+        .respond(response)
         .await
         .unwrap_or_else(|error| tracing::error!(%error, "Failed to send response"))
 }

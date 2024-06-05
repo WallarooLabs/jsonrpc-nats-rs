@@ -13,6 +13,7 @@ pub use self::error::ErrorObject;
 pub use self::request::Request;
 pub use self::response::Payload;
 pub use self::response::Response;
+pub use self::service::handle_jsonrpc_call;
 pub use self::service::JsonRpc2Service;
 
 mod client;

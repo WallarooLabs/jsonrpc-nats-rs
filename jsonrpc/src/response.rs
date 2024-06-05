@@ -20,6 +20,11 @@ impl Response {
         &self.id
     }
 
+    pub fn method_not_found(id: json::Value, method: &str) -> Self {
+        let error = ErrorObject::method_not_found(method);
+        Self::failure(id, error)
+    }
+
     pub fn success(id: json::Value, result: json::Value) -> Self {
         let jsonrpc = JsonRpc2Version::JsonRpc2;
         let payload = Payload::success(result);

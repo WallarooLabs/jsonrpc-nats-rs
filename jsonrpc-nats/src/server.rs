@@ -24,7 +24,7 @@ impl Server {
         &self.client
     }
 
-    pub async fn new(client: nats::Client) -> Result<Self, nats::Error> {
+    pub(crate) async fn new(client: nats::Client) -> Result<Self, nats::Error> {
         let description = option_env!("CARGO_PKG_DESCRIPTION").map(ToString::to_string);
         let name = env!("CARGO_PKG_NAME").to_string();
         let version = env!("CARGO_PKG_VERSION").to_string();
@@ -98,9 +98,13 @@ impl Server {
             >,
     {
         while let Some(request) = endpoint.next().await {
-            if let Err(error) = handle_nats_request(&ctx, request).await {
-                tracing::error!(%error, "Failed to send response");
-            }
+            let response = handle_nats_request(&ctx, &request.message.payload)
+                .await
+                .map_err(nats_service_error);
+            request
+                .respond(response)
+                .await
+                .unwrap_or_else(|error| tracing::error!(%error, "Failed to send response"));
         }
     }
 
@@ -136,10 +140,7 @@ impl Server {
     }
 }
 
-async fn handle_nats_request<R>(
-    ctx: &R,
-    request: nats::service::Request,
-) -> Result<(), nats::PublishError>
+async fn handle_nats_request<R>(ctx: &R, message: &[u8]) -> json::Result<Bytes>
 where
     R: JsonRpc2
         + JsonRpc2Service<
@@ -148,28 +149,8 @@ where
             Error = <R as JsonRpc2>::Error,
         >,
 {
-    let response = handle_jsonrpc_call::<R>(ctx, &request.message.payload)
-        .await
-        .map_err(nats_service_error);
-    request.respond(response).await
-}
-
-async fn handle_jsonrpc_call<R>(ctx: &R, request: &[u8]) -> json::Result<Bytes>
-where
-    R: JsonRpc2
-        + JsonRpc2Service<
-            <R as JsonRpc2>::Request,
-            Response = <R as JsonRpc2>::Response,
-            Error = <R as JsonRpc2>::Error,
-        >,
-{
-    let (id, request) = json::from_slice::<jsonrpc::Request>(request)?.into_request::<R>()?;
-
-    tracing::trace!(?request);
-    let result = ctx.call(request).await;
-    tracing::trace!(?result);
-
-    let response = jsonrpc::Response::from_result(id, result)?;
+    let request = json::from_slice::<jsonrpc::Request>(message)?;
+    let response = jsonrpc::handle_jsonrpc_call(ctx, request).await?;
     json::to_vec(&response).map(Bytes::from)
 }
 
