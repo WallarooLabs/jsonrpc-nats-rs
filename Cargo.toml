@@ -1,5 +1,11 @@
 [workspace]
-members = ["jsonrpc", "jsonrpc-nats", "jsonrpc-derive", "pingpong"]
+members = [
+    "jsonrpc",
+    "jsonrpc-nats",
+    "jsonrpc-derive",
+    "pingpong",
+    "jsonrpc-ipc",
+]
 resolver = "2"
 
 
