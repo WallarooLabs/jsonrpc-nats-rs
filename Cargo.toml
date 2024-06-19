@@ -30,6 +30,7 @@ tokio = { version = "1.32", features = ["full"] }
 tracing = "0.1"
 
 jsonrpc = { path = "./jsonrpc" }
+jsonrpc-ipc = { path = "./jsonrpc-ipc" }
 jsonrpc-nats = { path = "./jsonrpc-nats" }
 jsonrpc-derive = { path = "./jsonrpc-derive" }
 
