@@ -10,9 +10,3 @@ impl fmt::Debug for Ipc {
             .finish()
     }
 }
-
-impl Default for Ipc {
-    fn default() -> Self {
-        Self::new()
-    }
-}

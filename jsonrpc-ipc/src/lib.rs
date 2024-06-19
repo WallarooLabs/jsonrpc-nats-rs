@@ -1,6 +1,3 @@
-use std::cell::Cell;
-
-use jsonrpc::AsyncClient;
 use jsonrpc::JsonRpc2;
 use jsonrpc::JsonRpc2Service;
 use serde_json as json;
@@ -25,34 +22,14 @@ mod service;
 /// It initializes internal framework and then can create either
 /// JSONRPC client or server object.
 ///
-pub struct Ipc {
-    tx: mpsc::Sender<Request>,
-    rx: Cell<Option<mpsc::Receiver<Request>>>,
-}
+pub struct Ipc;
 
 impl Ipc {
     /// New IPC connection using all the default settings
     ///
-    pub fn new() -> Self {
+    pub fn pair() -> (Server, Client) {
         let (tx, rx) = mpsc::channel::<Request>(10);
-        let rx = Cell::new(Some(rx));
-        Self { tx, rx }
-    }
-
-    /// Convert this object into JSONRPC client
-    ///
-    pub fn client(self) -> AsyncClient<Client> {
-        let transport = Client::new(self.tx.clone());
-        AsyncClient::with_transport(transport)
-    }
-
-    /// Convert this object into JSONRPC server
-    ///
-    pub async fn server(self) -> Result<Server, Error> {
-        self.rx
-            .take()
-            .ok_or(Error::ServerAlreadyExists)
-            .map(Server::new)
+        (Server::new(rx), Client::new(tx))
     }
 }
 

@@ -45,6 +45,12 @@ impl Nats {
         AsyncClient::with_transport(transport)
     }
 
+    /// Convert this object into JSONRPC NATS transport
+    ///
+    pub fn transport(self) -> Client {
+        Client::new(self.client)
+    }
+
     /// Convert this object into JSONRPC server
     ///
     pub async fn server(self) -> Result<Server, nats::Error> {

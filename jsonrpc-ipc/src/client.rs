@@ -1,6 +1,6 @@
 use super::*;
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct Client {
     tx: mpsc::Sender<Request>,
 }
