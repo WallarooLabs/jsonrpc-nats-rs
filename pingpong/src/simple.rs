@@ -8,7 +8,7 @@ use jsonrpc::JsonRpc2Service;
     request = "()",
     response = "String",
     // error = "SimpleError",
-    client
+    client = "SimpleClient",
 )]
 pub(crate) struct Simple;
 
