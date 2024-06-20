@@ -1,7 +1,10 @@
 use darling::export::syn;
-use darling::util::Flag;
 use darling::FromDeriveInput;
 use darling::FromMeta;
+
+use client::Client;
+
+mod client;
 
 #[proc_macro_derive(JsonRpc2, attributes(jsonrpc))]
 pub fn derive(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
@@ -17,7 +20,7 @@ struct JsonRpcAttrs {
     error: Option<syn::Type>,
     #[darling(default)]
     crates: Crates,
-    client: Flag,
+    client: Client,
 }
 
 #[derive(Debug, FromMeta)]
@@ -87,10 +90,7 @@ fn derive2(input: proc_macro2::TokenStream) -> proc_macro2::TokenStream {
     };
 
     let jsonrpc2 = derive_jsonrpc2(&ast, &attrs);
-    let client = attrs
-        .client
-        .is_present()
-        .then(|| derive_client(&ast, &attrs));
+    let client = attrs.client.derive(&ast, &attrs);
 
     quote::quote!(
         #jsonrpc2
@@ -114,59 +114,5 @@ fn derive_jsonrpc2(ast: &syn::DeriveInput, attrs: &JsonRpcAttrs) -> proc_macro2:
             type Response = #response;
             type Error = #error;
         }
-    )
-}
-
-fn derive_client(ast: &syn::DeriveInput, attrs: &JsonRpcAttrs) -> proc_macro2::TokenStream {
-    let name = &ast.ident;
-    let jsonrpc = attrs.jsonrpc();
-    let clientext = syn::Ident::new(&format!("{}Ext", name), name.span());
-    let serde_json = &attrs.crates.serde_json;
-
-    let method = syn::Ident::new(attrs.method(), name.span());
-    let request = attrs.request(name);
-    let response = attrs.response(name);
-    let error = attrs.error(name);
-
-    let request = match request {
-        syn::Type::Tuple(tuple) if tuple.elems.is_empty() => None,
-        other => Some(other),
-    };
-
-    let method_params = request.map(
-        |request| quote::quote!(request: impl ::core::convert::Into<::core::option::Option<#request>> + ::core::marker::Send,),
-    );
-
-    let call_params = if method_params.is_some() {
-        quote::quote!(request)
-    } else {
-        quote::quote!(None)
-    };
-
-    quote::quote!(
-        pub trait #clientext<T>
-        where
-            T: #jsonrpc::JsonRpc2Service<#jsonrpc::Request, Response = #jsonrpc::Response>,
-            T::Error: ::core::convert::From<#serde_json::Error>,
-        {
-            fn #method(
-                &self,
-                #method_params
-            ) -> impl ::core::future::Future<Output = ::core::result::Result<::core::result::Result<#response, #error>, T::Error>> + ::core::marker::Send;
-        }
-
-        impl<T> #clientext<T> for #jsonrpc::AsyncClient<T>
-        where
-            T: #jsonrpc::JsonRpc2Service<#jsonrpc::Request, Response = #jsonrpc::Response>,
-            T::Error: ::core::convert::From<#serde_json::Error>,
-        {
-            async fn #method(
-                &self,
-                #method_params
-            ) -> ::core::result::Result<::core::result::Result<#response, #error>, T::Error> {
-                self.call::<#name>(#call_params).await
-            }
-        }
-
     )
 }

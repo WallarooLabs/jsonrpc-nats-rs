@@ -10,7 +10,7 @@ use serde::{Deserialize, Serialize};
     // request = "CountRequest",
     // response = "CountResponse",
     // error = "CountError",
-    client
+    client,
 )]
 pub(crate) struct Count {
     count: AtomicU64,
