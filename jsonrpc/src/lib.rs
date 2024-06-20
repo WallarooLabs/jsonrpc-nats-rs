@@ -23,6 +23,16 @@ mod error;
 mod request;
 mod response;
 
+pub mod export {
+    pub use core::convert::From;
+    pub use core::convert::Into;
+    pub use core::future::Future;
+    pub use core::marker::Send;
+    pub use core::ops::Deref;
+    pub use core::option::Option;
+    pub use core::result::Result;
+}
+
 /// Define a single JSONRPC function
 pub trait JsonRpc2: Send + Sync {
     /// JSONRPC method name

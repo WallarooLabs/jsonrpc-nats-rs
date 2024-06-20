@@ -54,12 +54,12 @@ fn derive_new_type(r#type: &syn::Type, attrs: &JsonRpcAttrs) -> proc_macro2::Tok
     let jsonrpc = attrs.jsonrpc();
     quote::quote!(
         pub struct #r#type<T>(pub #jsonrpc::AsyncClient<T>);
-        impl<T> ::core::convert::From<#jsonrpc::AsyncClient<T>> for #r#type<T> {
+        impl<T> #jsonrpc::export::From<#jsonrpc::AsyncClient<T>> for #r#type<T> {
             fn from(client: #jsonrpc::AsyncClient<T>) -> Self {
                 Self(client)
             }
         }
-        impl<T> ::core::ops::Deref for #r#type<T> {
+        impl<T> #jsonrpc::export::Deref for #r#type<T> {
             type Target = #jsonrpc::AsyncClient<T>;
 
             fn deref(&self) -> &Self::Target {
@@ -90,7 +90,7 @@ fn derive_client(
     };
 
     let method_params = request.map(
-        |request| quote::quote!(request: impl ::core::convert::Into<::core::option::Option<#request>> + ::core::marker::Send,),
+        |request| quote::quote!(request: impl #jsonrpc::export::Into<#jsonrpc::export::Option<#request>> + #jsonrpc::export::Send,),
     );
 
     let call_params = if method_params.is_some() {
@@ -108,23 +108,23 @@ fn derive_client(
         pub trait #clientext<T>
         where
             T: #jsonrpc::JsonRpc2Service<#jsonrpc::Request, Response = #jsonrpc::Response>,
-            T::Error: ::core::convert::From<#serde_json::Error>,
+            T::Error: #jsonrpc::export::From<#serde_json::Error>,
         {
             fn #method(
                 &self,
                 #method_params
-            ) -> impl ::core::future::Future<Output = ::core::result::Result<::core::result::Result<#response, #error>, T::Error>> + ::core::marker::Send;
+            ) -> impl #jsonrpc::export::Future<Output = #jsonrpc::export::Result<jsonrpc::export::Result<#response, #error>, T::Error>> + #jsonrpc::export::Send;
         }
 
         impl<T> #clientext<T> for #client
         where
             T: #jsonrpc::JsonRpc2Service<#jsonrpc::Request, Response = #jsonrpc::Response>,
-            T::Error: ::core::convert::From<#serde_json::Error>,
+            T::Error: #jsonrpc::export::From<#serde_json::Error>,
         {
             async fn #method(
                 &self,
                 #method_params
-            ) -> ::core::result::Result<::core::result::Result<#response, #error>, T::Error> {
+            ) -> #jsonrpc::export::Result<#jsonrpc::export::Result<#response, #error>, T::Error> {
                 self.call::<#name>(#call_params).await
             }
         }
