@@ -24,6 +24,7 @@ mod request;
 mod response;
 
 pub mod export {
+    pub use core::convert::AsRef;
     pub use core::convert::From;
     pub use core::convert::Into;
     pub use core::future::Future;

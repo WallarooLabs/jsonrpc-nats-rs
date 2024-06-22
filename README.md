@@ -59,21 +59,13 @@ struct Frob;
 `client` - Client extension trait generation attribute. Optional.
   If not present, client extension trait is not generated.
   If present without value - client extension trait is generated for `jsonrpc::AsyncClient<T>`
-  If present with value then client extension trait is generated for the newtype struct with the given name as well as helper traits and client extension trait
+  If present with value then client extension trait is generated for the given type which should be `AsRef<jsonrpc::AsyncClient<T>>`
 
 ```Rust
-pub struct FrobClient(pub jsonrpc::AsyncClient<T>);
+pub struct FrobClient(jsonrpc::AsyncClient<T>);
 
-impl<T> From<jsonrpc::AsyncClient<T>> for FrobClient<T> {
-    fn from(client: jsonrpc::AsyncClient<T>) -> Self {
-        Self(client)
-    }
-}
-
-impl<T> Deref for FrobClient<T> {
-    type Target = jsonrpc::AsyncClient<T>;
-
-    fn deref(&self) -> &Self::Target {
+impl<T> AsRef<jsonrpc::AsyncClient<T>> for FrobClient<T> {
+    fn as_ref(&self) -> &jsonrpc::AsyncClient<T> {
         &self.0
     }
 }

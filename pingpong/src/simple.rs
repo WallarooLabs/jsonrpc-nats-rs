@@ -8,7 +8,7 @@ use jsonrpc::JsonRpc2Service;
     request = "()",
     response = "String",
     // error = "SimpleError",
-    client = "SimpleClient",
+    client = "SimpleClient<T>",
 )]
 pub(crate) struct Simple;
 
@@ -22,6 +22,20 @@ pub(crate) type SimpleError = ();
 //     type Response = String;
 //     type Error = SimpleError;
 // }
+
+pub(crate) struct SimpleClient<T>(jsonrpc::AsyncClient<T>);
+
+impl<T> From<jsonrpc::AsyncClient<T>> for SimpleClient<T> {
+    fn from(client: jsonrpc::AsyncClient<T>) -> Self {
+        Self(client)
+    }
+}
+
+impl<T> AsRef<jsonrpc::AsyncClient<T>> for SimpleClient<T> {
+    fn as_ref(&self) -> &jsonrpc::AsyncClient<T> {
+        &self.0
+    }
+}
 
 impl JsonRpc2Service<<Self as JsonRpc2>::Request> for Simple {
     type Response = <Self as JsonRpc2>::Response;

@@ -49,3 +49,9 @@ where
         Ok(response)
     }
 }
+
+impl<T> AsRef<Self> for AsyncClient<T> {
+    fn as_ref(&self) -> &Self {
+        self
+    }
+}
