@@ -16,14 +16,7 @@ impl Client {
         match self {
             Self::Skip => None,
             Self::Default => Some(derive_client(ast, attrs, None)),
-            Self::NewType(r#type) => {
-                let new_type = derive_new_type(r#type, attrs);
-                let client = derive_client(ast, attrs, Some(r#type));
-                Some(quote::quote!(
-                    #new_type
-                    #client
-                ))
-            }
+            Self::NewType(r#type) => Some(derive_client(ast, attrs, Some(r#type))),
         }
     }
 }
@@ -48,25 +41,6 @@ fn litstr(value: &syn::Lit) -> darling::Result<&syn::LitStr> {
         syn::Lit::Str(value) => Ok(value),
         _ => Err(darling::Error::unexpected_lit_type(value)),
     }
-}
-
-fn derive_new_type(r#type: &syn::Type, attrs: &JsonRpcAttrs) -> proc_macro2::TokenStream {
-    let jsonrpc = attrs.jsonrpc();
-    quote::quote!(
-        pub struct #r#type<T>(pub #jsonrpc::AsyncClient<T>);
-        impl<T> #jsonrpc::export::From<#jsonrpc::AsyncClient<T>> for #r#type<T> {
-            fn from(client: #jsonrpc::AsyncClient<T>) -> Self {
-                Self(client)
-            }
-        }
-        impl<T> #jsonrpc::export::Deref for #r#type<T> {
-            type Target = #jsonrpc::AsyncClient<T>;
-
-            fn deref(&self) -> &Self::Target {
-                &self.0
-            }
-        }
-    )
 }
 
 fn derive_client(
@@ -101,11 +75,11 @@ fn derive_client(
 
     let client = client.map_or_else(
         || quote::quote!(#jsonrpc::AsyncClient<T>),
-        |r#type| quote::quote!(#r#type<T>),
+        |r#type| quote::quote!(#r#type),
     );
 
     quote::quote!(
-        pub trait #clientext<T>
+        pub trait #clientext<T>: #jsonrpc::export::AsRef<#jsonrpc::AsyncClient<T>>
         where
             T: #jsonrpc::JsonRpc2Service<#jsonrpc::Request, Response = #jsonrpc::Response>,
             T::Error: #jsonrpc::export::From<#serde_json::Error>,
@@ -125,7 +99,7 @@ fn derive_client(
                 &self,
                 #method_params
             ) -> #jsonrpc::export::Result<#jsonrpc::export::Result<#response, #error>, T::Error> {
-                self.call::<#name>(#call_params).await
+                self.as_ref().call::<#name>(#call_params).await
             }
         }
 
