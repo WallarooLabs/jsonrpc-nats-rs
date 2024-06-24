@@ -79,15 +79,28 @@ fn derive_client(
     );
 
     quote::quote!(
-        pub trait #clientext<T>: #jsonrpc::export::AsRef<#jsonrpc::AsyncClient<T>>
+        pub trait #clientext<T>
         where
             T: #jsonrpc::JsonRpc2Service<#jsonrpc::Request, Response = #jsonrpc::Response>,
-            T::Error: #jsonrpc::export::From<#serde_json::Error>,
+            T::Error: ::core::convert::From<#serde_json::Error>,
         {
             fn #method(
                 &self,
                 #method_params
-            ) -> impl #jsonrpc::export::Future<Output = #jsonrpc::export::Result<jsonrpc::export::Result<#response, #error>, T::Error>> + #jsonrpc::export::Send;
+            ) -> impl ::core::future::Future<Output = ::core::result::Result<::core::result::Result<#response, #error>, T::Error>> + ::core::marker::Send;
+        }
+
+        impl<T> #clientext<T> for #jsonrpc::AsyncClient<T>
+        where
+            T: #jsonrpc::JsonRpc2Service<#jsonrpc::Request, Response = #jsonrpc::Response>,
+            T::Error: ::core::convert::From<#serde_json::Error>,
+        {
+            async fn #method(
+                &self,
+                #method_params
+            ) -> ::core::result::Result<::core::result::Result<#response, #error>, T::Error> {
+                self.call::<#name>(#call_params).await
+            }
         }
 
         impl<T> #clientext<T> for #client
@@ -98,10 +111,11 @@ fn derive_client(
             async fn #method(
                 &self,
                 #method_params
-            ) -> #jsonrpc::export::Result<#jsonrpc::export::Result<#response, #error>, T::Error> {
+            ) -> ::core::result::Result<::core::result::Result<#response, #error>, T::Error> {
                 self.as_ref().call::<#name>(#call_params).await
             }
         }
+
 
     )
 }
