@@ -1,5 +1,6 @@
 use super::*;
 
+#[expect(dead_code)]
 pub(crate) trait PingPongExt<T>
 where
     T: jsonrpc::JsonRpc2Service<jsonrpc::Request, Response = jsonrpc::Response>,
