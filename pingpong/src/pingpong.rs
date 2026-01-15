@@ -22,8 +22,8 @@ pub(crate) struct PingPongResponse {
     count: usize,
 }
 
-/// This can also be derived automatically
-///
+// This can also be derived automatically
+//
 // impl JsonRpc2 for PingPong {
 //     const METHOD: &'static str = "pingpong";
 //     type Request = PingPongRequest;
