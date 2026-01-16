@@ -1,6 +1,7 @@
 use super::*;
 
 #[derive(Debug)]
+#[expect(clippy::large_enum_variant)]
 pub(crate) enum Client {
     Skip,
     Default,
