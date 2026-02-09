@@ -10,7 +10,7 @@ use jsonrpc::JsonRpc2Service;
     error = "()",
     client
 )]
-#[expect(dead_code)]
+#[allow(dead_code)]
 pub(crate) struct Multiarg {
     seed: String,
 }
