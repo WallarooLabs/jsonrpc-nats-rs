@@ -12,19 +12,19 @@ use serde::{Deserialize, Serialize};
     // error = "CountError",
     client,
 )]
-pub(crate) struct Count {
+pub struct Count {
     count: AtomicU64,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub(crate) struct CountRequest;
+pub struct CountRequest;
 
 #[derive(Debug, Serialize, Deserialize)]
-pub(crate) struct CountResponse {
+pub struct CountResponse {
     count: u64,
 }
 
-pub(crate) type CountError = ();
+pub type CountError = ();
 
 // impl JsonRpc2 for Count {
 //     const METHOD: &'static str = "count";

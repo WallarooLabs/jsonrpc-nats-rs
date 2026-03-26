@@ -8,16 +8,16 @@ mod impls;
 
 #[derive(Debug, Default, JsonRpc2)]
 #[jsonrpc(method = "pingpong", error = "String", client)]
-pub(crate) struct PingPong;
+pub struct PingPong;
 
 #[derive(Debug, Serialize, Deserialize)]
-pub(crate) struct PingPongRequest {
+pub struct PingPongRequest {
     count: usize,
     text: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub(crate) struct PingPongResponse {
+pub struct PingPongResponse {
     text: String,
     count: usize,
 }

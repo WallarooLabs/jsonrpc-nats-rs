@@ -6,10 +6,10 @@ use tracing_subscriber::EnvFilter;
 mod client;
 mod server;
 
-mod count;
-mod multiarg;
-mod pingpong;
-mod simple;
+pub mod count;
+pub mod multiarg;
+pub mod pingpong;
+pub mod simple;
 
 #[derive(Debug, Parser)]
 struct Cli {
